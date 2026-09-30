@@ -14,19 +14,7 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm fixed-top">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
-                <img src="/Horizontal.jpg" alt="Logo UTA" class="logo-navbar">
-                Proceso de Postulación
-            </a>
-            <div class="d-flex align-items-center">
-                <button class="btn btn-outline-light btn-sm" onclick="window.location.href='/vacantes'">
-                    <i class="bi bi-x-circle me-1"></i>Cancelar
-                </button>
-            </div>
-        </div>
-    </nav>
+    
 
     <div class="container-fluid px-4 py-4">
         <!-- Header -->
@@ -64,27 +52,30 @@
             </div>
         </div>
 
-        <!-- Bottom: AI Mockup & Submit -->
+        <!-- Bottom: AI Match & Submit -->
         <div class="row mt-4">
             <div class="col-12">
-                <div class="card shadow-sm border-0 ai-panel p-4 mb-4">
-                    <h5 class="fw-bold text-success mb-3">
-                        <i class="bi bi-robot me-2"></i>Análisis de IA (Vista Previa)
-                    </h5>
-                    <p class="text-dark mb-2">Hemos analizado tu perfil respecto a los requisitos de esta oferta. Aquí tienes algunas sugerencias para destacar:</p>
-                    <ul class="text-secondary mb-0">
-                        <li><strong>Fortaleza:</strong> Tu carrera coincide exactamente con lo solicitado.</li>
-                        <li><strong>Oportunidad de Mejora:</strong> Te sugerimos detallar más sobre tecnologías específicas en tu sección de experiencia.</li>
-                        <li><strong>Tip:</strong> Asegúrate de que tus expectativas de renta (si las pusiste) estén acordes al mercado para este cargo.</li>
-                    </ul>
+                <div class="card shadow-sm border-0 ai-panel p-4 mb-4" id="ai-panel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-success mb-0">
+                            <i class="bi bi-robot me-2"></i>Análisis de Inteligencia Artificial
+                        </h5>
+                        <button class="btn btn-sm btn-outline-success d-none" id="btn-refresh-ia" onclick="refreshAnalysis()">
+                            <i class="bi bi-arrow-repeat me-1"></i>Actualizar Análisis
+                        </button>
+                    </div>
+                    <div id="ai-content">
+                        <div class="text-center py-4"><div class="spinner-border text-success" role="status"></div><p class="mt-2 text-success">La IA de Google está analizando tu CV frente a la oferta...</p></div>
+                    </div>
                 </div>
             </div>
 
             <div class="col-12 text-center py-4 border-top">
                 <h4 class="fw-semibold mb-3">¿Todo listo para enviar tu perfil?</h4>
-                <button class="btn btn-primary btn-lg fw-bold px-5 py-3 shadow" onclick="enviarPostulacion()" id="btn-submit">
+                <button class="btn btn-primary btn-lg fw-bold px-5 py-3 shadow" onclick="enviarPostulacion()" id="btn-submit" disabled>
                     <i class="bi bi-send-fill me-2"></i>Enviar Postulación Definitiva
                 </button>
+                <p class="text-danger small mt-2 d-none" id="submit-warning">Debes actualizar el análisis de IA antes de enviar.</p>
             </div>
         </div>
     </div>
@@ -100,6 +91,9 @@
         const ofertaId = urlParams.get('oferta_id');
 
         let baseCV = null; // Guardar el CV original para restaurarlo
+        let currentOfertaData = null;
+        let isAnalysisUpdated = false;
+        let lastAnalysis = { score: 0, feedback: '' };
 
         document.addEventListener('DOMContentLoaded', () => {
             if (!ofertaId) {
@@ -117,6 +111,7 @@
                 const data = await res.json();
                 if (data.success) {
                     const o = data.data;
+                    currentOfertaData = o;
                     document.getElementById('oferta-container').innerHTML = `
                         <h3 class="fw-bold text-primary mb-1">${o.titulo}</h3>
                         <h5 class="text-muted mb-4"><i class="bi bi-building me-1"></i>${o.nombre_empresa}</h5>
@@ -156,6 +151,14 @@
                     baseCV = data.data; // Guardamos en memoria el CV original
                     renderEditableCV(baseCV);
                     document.getElementById('btn-restore-cv').disabled = false;
+                    
+                    // Solo intentar el análisis si ya tenemos la oferta cargada
+                    if (currentOfertaData) {
+                        refreshAnalysis();
+                    } else {
+                        // Esperar un poco si la oferta fue más lenta
+                        setTimeout(refreshAnalysis, 1000);
+                    }
                 } else {
                     document.getElementById('cv-container').innerHTML = '<div class="alert alert-warning">No se pudo cargar tu currículum. Por favor, edita tu perfil.</div>';
                 }
@@ -212,20 +215,29 @@
                     </div>
                 </form>
             `;
+
+            // Agregar listeners para detectar cambios
+            const form = document.getElementById('form-cv-postulacion');
+            form.addEventListener('input', () => {
+                isAnalysisUpdated = false;
+                document.getElementById('btn-submit').disabled = true;
+                document.getElementById('submit-warning').classList.remove('d-none');
+                document.getElementById('btn-refresh-ia').classList.remove('d-none');
+            });
         }
 
         function restoreBaseCV() {
             if (baseCV && confirm('¿Estás seguro de querer descartar tus cambios y restaurar el CV base de tu perfil?')) {
                 renderEditableCV(baseCV);
+                isAnalysisUpdated = false;
+                document.getElementById('btn-submit').disabled = true;
+                document.getElementById('submit-warning').classList.remove('d-none');
+                document.getElementById('btn-refresh-ia').classList.remove('d-none');
             }
         }
 
-        async function enviarPostulacion() {
-            const btn = document.getElementById('btn-submit');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Enviando...';
-
-            const cvSnapshot = {
+        function getCVSnapshot() {
+            return {
                 nombre_completo: document.getElementById('cv-nombre').value,
                 email: document.getElementById('cv-email').value,
                 facultad: baseCV.facultad,
@@ -236,6 +248,58 @@
                 habilidades: document.getElementById('cv-habilidades').value,
                 expectativa_renta: document.getElementById('cv-renta').value
             };
+        }
+
+        async function refreshAnalysis() {
+            const aiContent = document.getElementById('ai-content');
+            aiContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-success" role="status"></div><p class="mt-2 text-success">Google Gemini está analizando tu perfil...</p></div>';
+            
+            document.getElementById('btn-refresh-ia').classList.add('d-none');
+
+            try {
+                const cvData = getCVSnapshot();
+                const res = await fetch('/api/postulaciones/analizar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cv: cvData, oferta: currentOfertaData })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    lastAnalysis = { score: data.match_score, feedback: data.feedback };
+                    isAnalysisUpdated = true;
+                    
+                    document.getElementById('btn-submit').disabled = false;
+                    document.getElementById('submit-warning').classList.add('d-none');
+
+                    aiContent.innerHTML = `
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge ${data.match_score >= 80 ? 'bg-success' : 'bg-warning text-dark'} fs-4 me-3 border border-secondary shadow-sm">${data.match_score}% Match</span>
+                            <span class="text-dark fw-medium">Este es el nivel de coincidencia estimado entre tu CV y la oferta.</span>
+                        </div>
+                        <div class="mt-3 w-100">${data.feedback}</div>
+                    `;
+                } else {
+                    aiContent.innerHTML = '<div class="alert alert-danger">Error al generar análisis. Reintenta.</div>';
+                    document.getElementById('btn-refresh-ia').classList.remove('d-none');
+                }
+            } catch (error) {
+                aiContent.innerHTML = '<div class="alert alert-danger">Error de conexión al analizar.</div>';
+                document.getElementById('btn-refresh-ia').classList.remove('d-none');
+            }
+        }
+
+        async function enviarPostulacion() {
+            if (!isAnalysisUpdated) {
+                alert('Debes actualizar el análisis de IA antes de enviar.');
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Enviando...';
+
+            const cvSnapshot = getCVSnapshot();
 
             try {
                 const res = await fetch('/api/postulaciones', {
@@ -244,7 +308,9 @@
                     body: JSON.stringify({
                         oferta_id: ofertaId,
                         postulante_id: user.id,
-                        cv_enviado: cvSnapshot
+                        cv_enviado: cvSnapshot,
+                        match_score: lastAnalysis.score,
+                        feedback_ia: lastAnalysis.feedback
                     })
                 });
                 const data = await res.json();
@@ -264,5 +330,7 @@
             }
         }
     </script>
+<script src="/navbar.js"></script>
+<script>renderNavbar('postular');</script>
 </body>
 </html>

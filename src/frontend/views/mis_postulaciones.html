@@ -17,24 +17,7 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm fixed-top">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand fw-bold d-flex align-items-center" href="/dashboard">
-                <img src="/Horizontal.jpg" alt="Logo UTA" class="logo-navbar">
-                Dashboard
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="/vacantes"><i class="bi bi-briefcase me-1"></i>Vacantes</a></li>
-                    <li class="nav-item"><a class="nav-link active fw-bold" href="/mis-postulaciones"><i class="bi bi-send-check me-1"></i>Mis Postulaciones</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/perfil"><i class="bi bi-person me-1"></i>Mi Perfil</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    
 
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
@@ -210,7 +193,7 @@
             document.getElementById('det-oferta-descripcion').textContent = p.oferta_descripcion || 'No disponible.';
             
             document.getElementById('det-ia-score').textContent = `Match: ${p.match_score}%`;
-            document.getElementById('det-ia-feedback').textContent = p.feedback_ia || 'Sin feedback registrado.';
+            document.getElementById('det-ia-feedback').innerHTML = p.feedback_ia || 'Sin feedback registrado.';
 
             // Renderizar CV
             const cvContainer = document.getElementById('det-cv-container');
@@ -272,5 +255,7 @@
             modal.show();
         }
     </script>
+<script src="/navbar.js"></script>
+<script>renderNavbar('mis_postulaciones');</script>
 </body>
 </html>

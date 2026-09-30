@@ -19,20 +19,7 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm fixed-top">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand fw-bold d-flex align-items-center" href="/dashboard">
-                <img src="/Horizontal.jpg" alt="Logo UTA" class="logo-navbar">
-                Dashboard Reclutador
-            </a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="/vacantes"><i class="bi bi-briefcase me-1"></i>Vacantes</a></li>
-                    <li class="nav-item"><a class="nav-link active fw-bold" href="/gestion-postulantes"><i class="bi bi-people me-1"></i>Evaluar Candidatos</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    
 
     <div class="container-fluid">
         <div class="row">
@@ -229,5 +216,7 @@
             }
         }
     </script>
+<script src="/navbar.js"></script>
+<script>renderNavbar('gestion_postulantes');</script>
 </body>
 </html>

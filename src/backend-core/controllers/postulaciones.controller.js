@@ -1,9 +1,24 @@
 const db = require('../config/db');
+const { calcularMatch } = require('../../ia-module/recomendador');
+
+exports.analizarMatchIA = async (req, res) => {
+    try {
+        const { cv, oferta } = req.body;
+        
+        // Llamar a la lógica de IA aislada
+        const jsonMatch = await calcularMatch(cv, oferta);
+
+        res.json({ success: true, match_score: jsonMatch.score, feedback: jsonMatch.feedback });
+    } catch (error) {
+        console.error('Error en controlador (analizarMatchIA):', error);
+        res.status(500).json({ success: false, error: 'Error al generar análisis de IA' });
+    }
+};
 
 // Postulante: Crear una nueva postulación
 exports.createPostulacion = async (req, res) => {
     try {
-        const { oferta_id, postulante_id, cv_enviado } = req.body;
+        const { oferta_id, postulante_id, cv_enviado, match_score, feedback_ia } = req.body;
 
         // Verificar si ya postuló
         const check = await db.query(
@@ -15,16 +30,12 @@ exports.createPostulacion = async (req, res) => {
             return res.status(400).json({ success: false, error: 'Ya has postulado a esta oferta.' });
         }
 
-        // Mock de IA Match Score (random entre 70 y 99)
-        const matchScore = (Math.random() * (99 - 70) + 70).toFixed(2);
-        const feedbackMock = "Fortaleza: Tienes los conocimientos básicos. Oportunidad: Sería ideal destacar más tu experiencia en proyectos prácticos relacionados a esta vacante.";
-
         const insertQuery = `
             INSERT INTO postulaciones (oferta_id, postulante_id, estado_avance, match_score, feedback_ia, cv_enviado)
             VALUES ($1, $2, 'enviada', $3, $4, $5)
             RETURNING *
         `;
-        const result = await db.query(insertQuery, [oferta_id, postulante_id, matchScore, feedbackMock, cv_enviado || null]);
+        const result = await db.query(insertQuery, [oferta_id, postulante_id, match_score, feedback_ia, cv_enviado || null]);
 
         res.json({ success: true, data: result.rows[0], message: 'Postulación enviada con éxito' });
     } catch (error) {
