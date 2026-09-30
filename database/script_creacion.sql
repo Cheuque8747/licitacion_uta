@@ -1,5 +1,5 @@
 -- Enum para Roles de Usuario
-CREATE TYPE rol_usuario AS ENUM ('postulante', 'empresa', 'administrador');
+CREATE TYPE rol_usuario AS ENUM ('postulante', 'reclutador', 'administrador');
 
 -- Tabla Base de Usuarios
 CREATE TABLE usuarios (
@@ -20,17 +20,27 @@ CREATE TABLE perfil_postulantes (
     facultad VARCHAR(100),
     cohorte INTEGER,
     expectativa_renta INTEGER,
-    cv_texto TEXT, -- Para el análisis de la IA
-    cv_url VARCHAR(255)
+    resumen TEXT, -- Resumen profesional
+    experiencia TEXT, -- Experiencia Laboral
+    habilidades TEXT, -- Habilidades clave
+    cv_url VARCHAR(255) -- Documento CV adjunto (opcional)
 );
 
--- Perfil de Empresas (Reclutadores)
-CREATE TABLE perfil_empresas (
-    usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+-- Entidad Empresa (Creada por el Administrador)
+CREATE TABLE empresas (
+    id SERIAL PRIMARY KEY,
     nombre_empresa VARCHAR(150) NOT NULL,
-    rut_empresa VARCHAR(20) NOT NULL,
+    rut_empresa VARCHAR(20) UNIQUE NOT NULL,
     rubro VARCHAR(100),
-    descripcion TEXT
+    descripcion TEXT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Perfil de Reclutadores (Usuarios asociados a una Empresa)
+CREATE TABLE perfil_reclutadores (
+    usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+    empresa_id INTEGER REFERENCES empresas(id) ON DELETE CASCADE,
+    cargo VARCHAR(100)
 );
 
 -- Ofertas Laborales (Empleos, Prácticas, Pasantías)
@@ -39,11 +49,16 @@ CREATE TYPE estado_oferta AS ENUM ('borrador', 'pendiente', 'publicada', 'cerrad
 
 CREATE TABLE ofertas_laborales (
     id SERIAL PRIMARY KEY,
-    empresa_id INTEGER REFERENCES perfil_empresas(usuario_id) ON DELETE CASCADE,
+    empresa_id INTEGER REFERENCES empresas(id) ON DELETE CASCADE,
+    reclutador_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL, -- El reclutador que la creó
     titulo VARCHAR(200) NOT NULL,
     descripcion TEXT NOT NULL,
+    experiencia_solicitada TEXT,
+    habilidades_requeridas TEXT,
     tipo tipo_oferta NOT NULL,
     estado estado_oferta DEFAULT 'pendiente',
+    facultad_requerida VARCHAR(100),
+    carrera_requerida TEXT[], -- Puede estar orientada a múltiples carreras
     fecha_publicacion TIMESTAMP,
     fecha_cierre TIMESTAMP,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -54,9 +69,10 @@ CREATE TABLE postulaciones (
     id SERIAL PRIMARY KEY,
     oferta_id INTEGER REFERENCES ofertas_laborales(id) ON DELETE CASCADE,
     postulante_id INTEGER REFERENCES perfil_postulantes(usuario_id) ON DELETE CASCADE,
-    estado_avance VARCHAR(50) DEFAULT 'enviada', -- ej: enviada, en revisión, entrevistado, contratado
+    estado_avance VARCHAR(50) DEFAULT 'enviada', -- ej: enviada, en revisión, entrevistado, contratado, rechazado
     match_score DECIMAL(5,2), -- % de match calculado por la IA
     feedback_ia TEXT, -- Retroalimentación de brechas (IA)
+    cv_enviado JSONB, -- Snapshot del CV al momento de enviar
     fecha_postulacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(oferta_id, postulante_id)
 );

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Sistema de Licitaciones</title>
+    <!-- Bootstrap CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        body { padding-top: 70px; background-color: #f8fafc; }
+    </style>
+</head>
+<body>
+    
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm fixed-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+                <img src="/Horizontal.jpg" alt="Logo UTA" class="logo-navbar">
+                Mi Perfil
+            </a>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-outline-light btn-sm" onclick="window.location.href='/dashboard'">
+                    <i class="bi bi-house-door me-1"></i>Volver al Inicio
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                
+                <div id="alert-box" class="alert d-none alert-dismissible fade show" role="alert">
+                    <span id="alert-msg"></span>
+                    <button type="button" class="btn-close" onclick="document.getElementById('alert-box').classList.add('d-none')"></button>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h4 class="mb-0 fw-bold" id="form-title">Cargando perfil...</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="perfil-form">
+                            <!-- Aquí se inyectan los campos dependiendo del rol -->
+                        </form>
+                    </div>
+                    <div class="card-footer bg-white border-top py-3 text-end">
+                        <button type="button" class="btn btn-primary fw-medium px-4" onclick="savePerfil()" id="btn-save">
+                            <i class="bi bi-floppy me-2"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const userData = localStorage.getItem('user');
+        if (!userData) window.location.href = '/login';
+        
+        const user = JSON.parse(userData);
+        const formContainer = document.getElementById('perfil-form');
+        const formTitle = document.getElementById('form-title');
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewId = urlParams.get('view_id'); // Por si un reclutador está viendo el CV
+
+            if (viewId && user.rol === 'reclutador') {
+                renderFormByRole('postulante', true);
+                loadPerfilData(viewId);
+            } else {
+                renderFormByRole(user.rol);
+                loadPerfilData();
+            }
+        });
+
+        const facultadesData = {
+            'Facultad de Ingeniería': ['Ingeniería Civil Informática', 'Ingeniería Civil Industrial', 'Ingeniería Civil Eléctrica', 'Ingeniería Mecánica'],
+            'Facultad de Ciencias': ['Licenciatura en Matemática', 'Licenciatura en Física', 'Biología', 'Química'],
+            'Facultad de Administración y Economía': ['Ingeniería Comercial', 'Ingeniería en Información y Control de Gestión', 'Contador Auditor'],
+            'Facultad de Ciencias Sociales y Jurídicas': ['Derecho', 'Psicología', 'Trabajo Social'],
+            'Facultad de Ciencias Agronómicas': ['Agronomía']
+        };
+
+        function renderFormByRole(rol, isReadOnly = false) {
+            if (rol === 'postulante') {
+                formTitle.innerHTML = '<i class="bi bi-person-badge text-primary me-2"></i>Perfil / Plantilla de CV';
+                formContainer.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Nombre Completo</label>
+                            <input type="text" class="form-control" id="nombre_completo" readonly disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Correo Electrónico</label>
+                            <input type="email" class="form-control" id="email" readonly disabled>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Facultad</label>
+                        <select class="form-select" id="facultad" required onchange="updateCarreras()" ${isReadOnly ? 'disabled' : ''}>
+                            <option value="">Selecciona tu Facultad...</option>
+                            ${Object.keys(facultadesData).map(f => `<option value="${f}">${f}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Carrera o Profesión</label>
+                        <select class="form-select" id="carrera" required ${isReadOnly ? 'disabled' : ''}>
+                            <option value="">Primero selecciona una Facultad...</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Año de Egreso (Cohorte)</label>
+                            <input type="number" class="form-control" id="cohorte" placeholder="Ej. 2023" required ${isReadOnly ? 'readonly disabled' : ''}>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Expectativa de Renta ($)</label>
+                            <input type="number" class="form-control" id="expectativa_renta" placeholder="Ej. 1000000" required ${isReadOnly ? 'readonly disabled' : ''}>
+                        </div>
+                    </div>
+                    <hr>
+                    <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-file-earmark-text me-2"></i>Información del Currículum</h5>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Resumen Profesional</label>
+                        <textarea class="form-control" id="resumen" rows="3" placeholder="Breve descripción de tu perfil profesional..." ${isReadOnly ? 'readonly disabled' : ''}></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Experiencia Laboral</label>
+                        <textarea class="form-control" id="experiencia" rows="4" placeholder="Lista tu experiencia relevante..." ${isReadOnly ? 'readonly disabled' : ''}></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Habilidades (Skills)</label>
+                        <textarea class="form-control" id="habilidades" rows="2" placeholder="Ej. Liderazgo, Python, Gestión de Proyectos..." ${isReadOnly ? 'readonly disabled' : ''}></textarea>
+                    </div>
+                `;
+            } else if (rol === 'reclutador') {
+                formTitle.innerHTML = '<i class="bi bi-building text-warning me-2"></i>Mi Perfil (Reclutador)';
+                formContainer.innerHTML = `
+                    <div class="alert alert-info border-0 shadow-sm mb-4"><i class="bi bi-info-circle-fill me-2"></i>Los datos de la empresa están bloqueados. Solo el administrador puede modificarlos.</div>
+                    
+                    <h5 class="fw-bold mb-3"><i class="bi bi-person-badge text-primary me-2"></i>Tus Datos Personales</h5>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Cargo en la Empresa</label>
+                        <input type="text" class="form-control" id="cargo" placeholder="Ej. Analista de Recursos Humanos" required>
+                    </div>
+
+                    <h5 class="fw-bold mb-3 border-top pt-3"><i class="bi bi-building text-secondary me-2"></i>Datos de la Empresa</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Nombre de la Empresa</label>
+                            <input type="text" class="form-control" id="nombre_empresa" readonly disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">RUT Empresa</label>
+                            <input type="text" class="form-control" id="rut_empresa" readonly disabled>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Rubro / Sector</label>
+                        <input type="text" class="form-control" id="rubro" readonly disabled>
+                    </div>
+                `;
+            } else {
+                formTitle.textContent = 'Rol no autorizado';
+                document.getElementById('btn-save').disabled = true;
+            }
+
+            if (isReadOnly) {
+                document.getElementById('btn-save').classList.add('d-none');
+            }
+        }
+
+        function updateCarreras(selectedCarrera = '') {
+            const fac = document.getElementById('facultad').value;
+            const carSelect = document.getElementById('carrera');
+            if (!fac) {
+                carSelect.innerHTML = '<option value="">Primero selecciona una Facultad...</option>';
+                return;
+            }
+            const carreras = facultadesData[fac] || [];
+            carSelect.innerHTML = '<option value="">Selecciona tu Carrera...</option>' + 
+                                  carreras.map(c => `<option value="${c}" ${c === selectedCarrera ? 'selected' : ''}>${c}</option>`).join('');
+        }
+
+        async function loadPerfilData(viewId) {
+            try {
+                let url = `/api/perfil?id=${user.id}&rol=${user.rol}`;
+                if (viewId && user.rol === 'reclutador') {
+                    url += `&view_id=${viewId}`;
+                }
+
+                const res = await fetch(url);
+                const resData = await res.json();
+                if (resData.success && resData.data) {
+                    const data = resData.data;
+                    const isViewingPostulante = (viewId && user.rol === 'reclutador') || user.rol === 'postulante';
+                    
+                    if (isViewingPostulante) {
+                        document.getElementById('nombre_completo').value = data.nombre_completo || '';
+                        document.getElementById('email').value = data.email || '';
+                        if (data.facultad) {
+                            document.getElementById('facultad').value = data.facultad;
+                            updateCarreras(data.carrera);
+                        }
+                        document.getElementById('cohorte').value = data.cohorte || '';
+                        document.getElementById('expectativa_renta').value = data.expectativa_renta || '';
+                        document.getElementById('resumen').value = data.resumen || '';
+                        document.getElementById('experiencia').value = data.experiencia || '';
+                        document.getElementById('habilidades').value = data.habilidades || '';
+                    } else if (user.rol === 'reclutador') {
+                        document.getElementById('cargo').value = data.cargo || '';
+                        document.getElementById('nombre_empresa').value = data.nombre_empresa || '';
+                        document.getElementById('rut_empresa').value = data.rut_empresa || '';
+                        document.getElementById('rubro').value = data.rubro || '';
+                    }
+                }
+            } catch (err) {
+                showAlert('Error al cargar los datos del perfil.', true);
+            }
+        }
+
+        async function savePerfil() {
+            // Validar HTML5 nativo
+            const form = document.getElementById('perfil-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            let perfilData = {};
+            if (user.rol === 'postulante') {
+                perfilData = {
+                    carrera: document.getElementById('carrera').value,
+                    facultad: document.getElementById('facultad').value,
+                    cohorte: document.getElementById('cohorte').value,
+                    expectativa_renta: document.getElementById('expectativa_renta').value,
+                    resumen: document.getElementById('resumen').value,
+                    experiencia: document.getElementById('experiencia').value,
+                    habilidades: document.getElementById('habilidades').value
+                };
+            } else if (user.rol === 'reclutador') {
+                perfilData = {
+                    cargo: document.getElementById('cargo').value
+                };
+            }
+
+            const btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+
+            try {
+                const res = await fetch('/api/perfil', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: user.id, rol: user.rol, perfilData })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('Perfil guardado con éxito!');
+                } else {
+                    showAlert(data.error, true);
+                }
+            } catch (err) {
+                showAlert('Error al guardar en el servidor', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-floppy me-2"></i>Guardar Cambios';
+            }
+        }
+
+        function showAlert(msg, isError = false) {
+            const box = document.getElementById('alert-box');
+            document.getElementById('alert-msg').textContent = msg;
+            box.className = 'alert alert-dismissible fade show ' + (isError ? 'alert-danger' : 'alert-success');
+            setTimeout(() => { box.classList.add('d-none'); }, 4000);
+        }
+    </script>
+</body>
+</html>

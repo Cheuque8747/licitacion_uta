@@ -1,8 +1,112 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 40px;
-    background-color: #f4f4f9;
+/* UTA Brand Colors based on Manual-Normas-Graficas_UTA2017.pdf */
+:root {
+    --uta-primary-dark: #22213F;
+    --uta-primary-light: #678FCA;
+    --uta-yellow: #DEB01F;
+    --uta-orange: #C9631F;
+    --uta-ocre: #CE9342;
+    --uta-navy: #303880;
+    --uta-medium-blue: #446BA9;
+    
+    --uta-gray-dark: #252525;
+    --uta-gray-medium: #888888;
+    --uta-gray-light: #ADADAD;
 }
-h1 {
-    color: #333;
+
+/* Global Typography Colors */
+body {
+    color: var(--uta-gray-dark);
+}
+
+/* Text Colors */
+.text-primary { color: var(--uta-primary-dark) !important; }
+.text-secondary { color: var(--uta-primary-light) !important; }
+.text-warning { color: var(--uta-yellow) !important; }
+.text-info { color: var(--uta-medium-blue) !important; }
+.text-danger { color: var(--uta-orange) !important; }
+.text-muted { color: var(--uta-gray-medium) !important; }
+.text-dark { color: var(--uta-gray-dark) !important; }
+
+/* Backgrounds */
+.bg-primary { background-color: var(--uta-primary-dark) !important; }
+.bg-secondary { background-color: var(--uta-primary-light) !important; }
+.bg-warning { background-color: var(--uta-yellow) !important; }
+.bg-info { background-color: var(--uta-medium-blue) !important; }
+.bg-danger { background-color: var(--uta-orange) !important; }
+.bg-dark { background-color: var(--uta-navy) !important; }
+
+/* Buttons - Primary (Dark Blue) */
+.btn-primary {
+    background-color: var(--uta-primary-dark);
+    border-color: var(--uta-primary-dark);
+    color: white;
+}
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+    background-color: var(--uta-navy);
+    border-color: var(--uta-navy);
+    color: white;
+}
+
+/* Buttons - Outline Primary */
+.btn-outline-primary {
+    color: var(--uta-primary-dark);
+    border-color: var(--uta-primary-dark);
+}
+.btn-outline-primary:hover, .btn-check:checked + .btn-outline-primary {
+    background-color: var(--uta-primary-dark) !important;
+    color: white !important;
+    border-color: var(--uta-primary-dark) !important;
+}
+
+/* Buttons - Secondary (Light Blue) */
+.btn-secondary {
+    background-color: var(--uta-primary-light);
+    border-color: var(--uta-primary-light);
+    color: white;
+}
+.btn-secondary:hover {
+    background-color: var(--uta-medium-blue);
+    border-color: var(--uta-medium-blue);
+    color: white;
+}
+
+/* Buttons - Warning (Yellow) */
+.btn-warning {
+    background-color: var(--uta-yellow);
+    border-color: var(--uta-yellow);
+    color: #22213F; /* Dark text for contrast */
+}
+.btn-warning:hover {
+    background-color: #c79e19;
+    border-color: #c79e19;
+    color: #22213F;
+}
+
+/* Badges / Borders */
+.border-primary { border-color: var(--uta-primary-dark) !important; }
+.border-warning { border-color: var(--uta-yellow) !important; }
+
+/* Navbar customization */
+.navbar-dark.bg-dark {
+    background-color: var(--uta-primary-dark) !important;
+    border-bottom: 3px solid var(--uta-yellow);
+}
+
+/* Login/Register Specific */
+.role-selector .btn-check:checked + .btn-outline-primary { 
+    background-color: #f0f7ff !important; 
+    color: var(--uta-primary-dark) !important; 
+    border-color: var(--uta-primary-dark) !important;
+    font-weight: bold;
+}
+
+.logo-header {
+    max-height: 80px;
+    object-fit: contain;
+}
+
+.logo-navbar {
+    max-height: 40px;
+    object-fit: contain;
+    margin-right: 10px;
 }

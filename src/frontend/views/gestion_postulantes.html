@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Postulantes - Sistema de Licitaciones UTA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        body { padding-top: 70px; background-color: #f8fafc; }
+        .sidebar { background-color: white; border-right: 1px solid #e2e8f0; height: calc(100vh - 70px); overflow-y: auto; }
+        .oferta-item { cursor: pointer; transition: all 0.2s; border-left: 4px solid transparent; }
+        .oferta-item:hover { background-color: #f1f5f9; }
+        .oferta-item.active { background-color: #e2e8f0; border-left-color: #0d6efd; font-weight: bold; }
+        
+        .status-select { font-size: 0.85rem; font-weight: bold; }
+        .score-badge { font-size: 0.9rem; padding: 0.4em 0.6em; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm fixed-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="/dashboard">
+                <img src="/Horizontal.jpg" alt="Logo UTA" class="logo-navbar">
+                Dashboard Reclutador
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/vacantes"><i class="bi bi-briefcase me-1"></i>Vacantes</a></li>
+                    <li class="nav-item"><a class="nav-link active fw-bold" href="/gestion-postulantes"><i class="bi bi-people me-1"></i>Evaluar Candidatos</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar: Lista de Ofertas -->
+            <div class="col-md-4 col-lg-3 sidebar p-0">
+                <div class="p-3 border-bottom bg-light">
+                    <h6 class="fw-bold text-secondary mb-0"><i class="bi bi-funnel me-1"></i>Mis Vacantes Publicadas</h6>
+                </div>
+                <div id="ofertas-list" class="list-group list-group-flush">
+                    <div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Cargando...</div>
+                </div>
+            </div>
+
+            <!-- Main Content: Tabla de Postulantes -->
+            <div class="col-md-8 col-lg-9 p-4">
+                <div id="welcome-state" class="text-center py-5 mt-5 text-muted">
+                    <i class="bi bi-arrow-left-circle mb-3 d-block" style="font-size: 3rem;"></i>
+                    <h4>Selecciona una vacante</h4>
+                    <p>Elige una oferta del panel izquierdo para ver los candidatos que han postulado.</p>
+                </div>
+
+                <div id="candidatos-state" class="d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h3 class="fw-bold text-primary mb-1" id="current-oferta-title">Título Vacante</h3>
+                            <p class="text-muted mb-0">Listado de candidatos ordenados por Score de IA.</p>
+                        </div>
+                        <span class="badge bg-secondary fs-6" id="total-candidatos">0 candidatos</span>
+                    </div>
+
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Candidato</th>
+                                            <th>Carrera / Facultad</th>
+                                            <th>IA Match Score</th>
+                                            <th>Estado</th>
+                                            <th class="text-end">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="postulantes-tbody">
+                                        <!-- Renderizado dinámico -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const userData = localStorage.getItem('user');
+        if (!userData) window.location.href = '/login';
+        const user = JSON.parse(userData);
+
+        if (user.rol !== 'reclutador') {
+            alert('Acceso no autorizado');
+            window.location.href = '/dashboard';
+        }
+
+        let currentSelectedOferta = null;
+
+        document.addEventListener('DOMContentLoaded', loadMisOfertas);
+
+        async function loadMisOfertas() {
+            try {
+                // Obtenemos solo las ofertas de ESTE reclutador
+                const res = await fetch(`/api/ofertas?view_mode=mis_ofertas&reclutador_id=${user.id}`);
+                const data = await res.json();
+                
+                const list = document.getElementById('ofertas-list');
+                
+                if (data.success) {
+                    if (data.data.length === 0) {
+                        list.innerHTML = '<div class="p-4 text-center text-muted small">No tienes ofertas publicadas.</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    data.data.forEach(o => {
+                        html += `
+                            <div class="oferta-item list-group-item list-group-item-action p-3" id="oferta-item-${o.id}" onclick="selectOferta(${o.id}, '${o.titulo.replace(/'/g, "\\'")}')">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <h6 class="fw-bold mb-0 text-truncate" style="max-width: 80%;">${o.titulo}</h6>
+                                    <span class="badge ${o.tipo === 'practica' ? 'bg-info' : 'bg-success'} text-white" style="font-size:0.6rem;">${o.tipo}</span>
+                                </div>
+                                <small class="text-muted"><i class="bi bi-calendar3 me-1"></i>${new Date(o.fecha_publicacion).toLocaleDateString()}</small>
+                            </div>
+                        `;
+                    });
+                    list.innerHTML = html;
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function selectOferta(ofertaId, titulo) {
+            // Actualizar UI
+            document.querySelectorAll('.oferta-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`oferta-item-${ofertaId}`).classList.add('active');
+            
+            document.getElementById('welcome-state').classList.add('d-none');
+            document.getElementById('candidatos-state').classList.remove('d-none');
+            
+            document.getElementById('current-oferta-title').textContent = titulo;
+            currentSelectedOferta = ofertaId;
+
+            // Cargar postulantes
+            loadPostulantes(ofertaId);
+        }
+
+        async function loadPostulantes(ofertaId) {
+            const tbody = document.getElementById('postulantes-tbody');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+
+            try {
+                const res = await fetch(`/api/postulaciones/oferta/${ofertaId}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    document.getElementById('total-candidatos').textContent = `${data.data.length} candidatos`;
+                    
+                    if (data.data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Aún no hay postulantes para esta vacante.</td></tr>';
+                        return;
+                    }
+
+                    let html = '';
+                    data.data.forEach(p => {
+                        let scoreColor = p.match_score >= 90 ? 'bg-success' : (p.match_score >= 80 ? 'bg-primary' : 'bg-secondary');
+                        
+                        html += `
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-dark">${p.nombre_completo}</div>
+                                    <div class="small text-muted"><i class="bi bi-envelope me-1"></i>${p.email}</div>
+                                </td>
+                                <td>
+                                    <div class="small text-dark fw-medium">${p.carrera || 'No indica'}</div>
+                                    <div class="small text-muted" style="font-size:0.75rem;">${p.facultad || ''}</div>
+                                </td>
+                                <td>
+                                    <span class="badge ${scoreColor} score-badge rounded-pill shadow-sm">${p.match_score}%</span>
+                                </td>
+                                <td>
+                                    <select class="form-select form-select-sm status-select" onchange="updateEstado(${p.postulacion_id}, this.value)">
+                                        <option value="enviada" ${p.estado_avance === 'enviada' ? 'selected' : ''}>Enviada</option>
+                                        <option value="en revisión" ${p.estado_avance === 'en revisión' ? 'selected' : ''}>En Revisión</option>
+                                        <option value="entrevistado" ${p.estado_avance === 'entrevistado' ? 'selected' : ''}>Entrevistado</option>
+                                        <option value="contratado" ${p.estado_avance === 'contratado' ? 'selected' : ''}>Contratado</option>
+                                        <option value="rechazado" ${p.estado_avance === 'rechazado' ? 'selected' : ''}>Rechazado</option>
+                                    </select>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary" title="Ver CV Base" onclick="alert('Funcionalidad para ver el CV detallado en construcción. Match IA: ${p.match_score}%')">
+                                        <i class="bi bi-file-earmark-person"></i> Ver Perfil
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                }
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-danger">Error al cargar datos.</td></tr>';
+            }
+        }
+
+        async function updateEstado(postulacionId, nuevoEstado) {
+            try {
+                const res = await fetch(`/api/postulaciones/${postulacionId}/estado`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estado_avance: nuevoEstado })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    // Mostrar un pequeño toast o simplemente dejarlo silencioso
+                    console.log('Estado actualizado a:', nuevoEstado);
+                } else {
+                    alert('Error al actualizar estado: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error de conexión.');
+            }
+        }
+    </script>
+</body>
+</html>

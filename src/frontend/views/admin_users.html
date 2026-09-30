@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios - Admin</title>
+    <!-- Bootstrap CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        body { padding-top: 70px; background-color: #f8fafc; }
+        .nav-tabs .nav-link { color: var(--uta-gray-medium); font-weight: 500; border: none; border-bottom: 2px solid transparent; }
+        .nav-tabs .nav-link.active { color: var(--uta-primary-dark); background: transparent; border-color: var(--uta-primary-dark); }
+    </style>
+</head>
+<body>
+    
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm fixed-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+                <img src="/Horizontal.jpg" alt="Logo UTA" class="logo-navbar">
+                Panel de Administración
+            </a>
+            <div class="d-flex align-items-center">
+                <span class="me-3 fw-medium text-light"><i class="bi bi-person-badge me-1"></i>Admin</span>
+                <button class="btn btn-outline-light btn-sm" onclick="window.location.href='/dashboard'">
+                    <i class="bi bi-house-door me-1"></i>Volver al Inicio
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1">Centro de Gestión</h2>
+                <p class="text-muted mb-0">Administra usuarios y empresas del sistema.</p>
+            </div>
+            <div>
+                <button class="btn btn-outline-secondary me-2" onclick="loadAllData()">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Refrescar
+                </button>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createEmpresaModal">
+                    <i class="bi bi-plus-lg me-1"></i>Nueva Empresa
+                </button>
+            </div>
+        </div>
+
+        <div id="alert-box" class="alert d-none alert-dismissible fade show" role="alert">
+            <span id="alert-msg"></span>
+            <button type="button" class="btn-close" onclick="document.getElementById('alert-box').classList.add('d-none')"></button>
+        </div>
+
+        <!-- Pestañas -->
+        <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="postulantes-tab" data-bs-toggle="tab" data-bs-target="#postulantes" type="button" role="tab"><i class="bi bi-person-lines-fill me-2"></i>Postulantes</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reclutadores-tab" data-bs-toggle="tab" data-bs-target="#reclutadores" type="button" role="tab"><i class="bi bi-person-badge me-2"></i>Reclutadores</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="empresas-tab" data-bs-toggle="tab" data-bs-target="#empresas" type="button" role="tab"><i class="bi bi-building me-2"></i>Empresas</button>
+            </li>
+        </ul>
+
+        <!-- Contenido de las Pestañas -->
+        <div class="tab-content" id="adminTabsContent">
+            <!-- Pestaña Postulantes / Reclutadores (usan la misma tabla lógica, filtrados) -->
+            <div class="tab-pane fade show active" id="postulantes" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0 table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light"><tr><th class="ps-4">ID</th><th>RUT</th><th>Nombre</th><th>Email</th><th>Estado</th><th class="text-end pe-4">Acciones</th></tr></thead>
+                            <tbody id="postulantes-table-body"><tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-pane fade" id="reclutadores" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0 table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light"><tr><th class="ps-4">ID</th><th>RUT</th><th>Nombre</th><th>Email</th><th>Estado</th><th class="text-end pe-4">Acciones</th></tr></thead>
+                            <tbody id="reclutadores-table-body"><tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pestaña Empresas -->
+            <div class="tab-pane fade" id="empresas" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0 table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light"><tr><th class="ps-4">ID</th><th>RUT Empresa</th><th>Nombre Empresa</th><th>Rubro</th></tr></thead>
+                            <tbody id="empresas-table-body"><tr><td colspan="4" class="text-center text-muted">Cargando...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Usuario -->
+    <div class="modal fade" id="editUserModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2 text-primary"></i>Editar Usuario</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="edit-user-form">
+                <input type="hidden" id="edit-user-id">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Nombre Completo</label>
+                    <input type="text" class="form-control" id="edit-nombre" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Correo Electrónico</label>
+                    <input type="email" class="form-control" id="edit-email" required>
+                </div>
+            </form>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" onclick="submitEditUser()">Guardar Cambios</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Crear Empresa -->
+    <div class="modal fade" id="createEmpresaModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title fw-bold"><i class="bi bi-building-add me-2"></i>Nueva Empresa</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="create-empresa-form">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Nombre de la Empresa</label>
+                    <input type="text" class="form-control" id="new-emp-nombre" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">RUT de la Empresa</label>
+                    <input type="text" class="form-control" id="new-emp-rut" placeholder="Ej: 77.666.555-4" pattern="^[0-9\.]+-[0-9kK]$" title="Ej: 77.666.555-4 o 77666555-4" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Rubro</label>
+                    <input type="text" class="form-control" id="new-emp-rubro" placeholder="Tecnología, Minería, etc." required>
+                </div>
+            </form>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-success" onclick="submitCreateEmpresa()">Crear Empresa</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const userData = localStorage.getItem('user');
+        if (!userData || JSON.parse(userData).rol !== 'administrador') window.location.href = '/dashboard';
+
+        let editModal, createEmpresaModal;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+            createEmpresaModal = new bootstrap.Modal(document.getElementById('createEmpresaModal'));
+            loadAllData();
+        });
+
+        function showAlert(msg, isError = false) {
+            const box = document.getElementById('alert-box');
+            document.getElementById('alert-msg').textContent = msg;
+            box.className = 'alert alert-dismissible fade show ' + (isError ? 'alert-danger' : 'alert-success');
+            setTimeout(() => { box.classList.add('d-none'); }, 4000);
+        }
+
+        async function loadAllData() {
+            await Promise.all([loadUsers(), loadEmpresas()]);
+        }
+
+        async function loadUsers() {
+            try {
+                const res = await fetch('/api/admin/users');
+                const data = await res.json();
+                if (data.success) {
+                    const postu = data.data.filter(u => u.rol === 'postulante');
+                    const reclu = data.data.filter(u => u.rol === 'reclutador');
+                    renderUserTable('postulantes-table-body', postu);
+                    renderUserTable('reclutadores-table-body', reclu);
+                }
+            } catch (err) { showAlert('Error cargando usuarios', true); }
+        }
+
+        async function loadEmpresas() {
+            try {
+                const res = await fetch('/api/admin/empresas');
+                const data = await res.json();
+                if (data.success) {
+                    const tbody = document.getElementById('empresas-table-body');
+                    tbody.innerHTML = '';
+                    if(data.data.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay empresas creadas.</td></tr>';
+                    data.data.forEach(e => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td class="ps-4 fw-medium text-secondary">#${e.id}</td>
+                                <td>${e.rut_empresa}</td>
+                                <td class="fw-bold">${e.nombre_empresa}</td>
+                                <td>${e.rubro || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                }
+            } catch(err) { console.error(err); }
+        }
+
+        function renderUserTable(tbodyId, users) {
+            const tbody = document.getElementById(tbodyId);
+            tbody.innerHTML = '';
+            if(users.length === 0) tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay registros.</td></tr>';
+            users.forEach(u => {
+                let statusBadge = u.verificado 
+                    ? '<span class="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="bi bi-check-circle-fill me-1"></i>Verificado</span>' 
+                    : '<span class="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25"><i class="bi bi-clock-fill me-1"></i>Pendiente</span>';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="ps-4 fw-medium text-secondary">#${u.id}</td>
+                        <td>${u.rut}</td>
+                        <td class="fw-medium">${u.nombre_completo}</td>
+                        <td>${u.email}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-end pe-4">
+                            <button class="btn ${u.verificado ? 'btn-outline-secondary' : 'btn-outline-success'} btn-sm" onclick="toggleVerify(${u.id})"><i class="bi ${u.verificado ? 'bi-x-circle' : 'bi-check-circle'}"></i></button>
+                            <button class="btn btn-outline-primary btn-sm mx-1" onclick="openEditModal(${u.id}, '${u.nombre_completo}', '${u.email}')"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteUser(${u.id})"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function submitCreateEmpresa() {
+            const form = document.getElementById('create-empresa-form');
+            if(!form.checkValidity()) return form.reportValidity();
+
+            const rutRaw = document.getElementById('new-emp-rut').value;
+            const rut = rutRaw.replace(/[^0-9kK]/g, '').toUpperCase().slice(0,-1) + '-' + rutRaw.slice(-1);
+            
+            try {
+                const res = await fetch('/api/admin/empresas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nombre_empresa: document.getElementById('new-emp-nombre').value,
+                        rut_empresa: rut,
+                        rubro: document.getElementById('new-emp-rubro').value
+                    })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    createEmpresaModal.hide();
+                    showAlert('Empresa creada exitosamente!');
+                    loadEmpresas();
+                    form.reset();
+                } else showAlert(data.error, true);
+            } catch(e) { showAlert('Error de conexión', true); }
+        }
+
+        async function toggleVerify(id) {
+            const res = await fetch('/api/admin/users/' + id + '/verify', { method: 'PUT' });
+            const data = await res.json();
+            if (data.success) { loadUsers(); showAlert('Estado modificado'); }
+            else showAlert(data.error, true);
+        }
+
+        function openEditModal(id, nombre, email) {
+            document.getElementById('edit-user-id').value = id;
+            document.getElementById('edit-nombre').value = nombre;
+            document.getElementById('edit-email').value = email;
+            editModal.show();
+        }
+
+        async function submitEditUser() {
+            const id = document.getElementById('edit-user-id').value;
+            const res = await fetch('/api/admin/users/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre_completo: document.getElementById('edit-nombre').value, email: document.getElementById('edit-email').value })
+            });
+            const data = await res.json();
+            if(data.success) { editModal.hide(); loadUsers(); showAlert('Editado exitosamente'); }
+            else showAlert(data.error, true);
+        }
+
+        async function deleteUser(id) {
+            if(!confirm('¿Borrar registro permanentemente?')) return;
+            const res = await fetch('/api/admin/users/' + id, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) { loadUsers(); showAlert('Registro eliminado'); }
+            else showAlert(data.error, true);
+        }
+    </script>
+</body>
+</html>

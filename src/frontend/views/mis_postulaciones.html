@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Postulaciones - Sistema de Licitaciones UTA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        body { padding-top: 70px; background-color: #f8fafc; }
+        .status-enviada { background-color: #e2e8f0; color: #475569; }
+        .status-revision { background-color: #fef3c7; color: #d97706; }
+        .status-entrevistado { background-color: #dbeafe; color: #2563eb; }
+        .status-contratado { background-color: #dcfce7; color: #16a34a; }
+        .status-rechazado { background-color: #fee2e2; color: #dc2626; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm fixed-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="/dashboard">
+                <img src="/Horizontal.jpg" alt="Logo UTA" class="logo-navbar">
+                Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/vacantes"><i class="bi bi-briefcase me-1"></i>Vacantes</a></li>
+                    <li class="nav-item"><a class="nav-link active fw-bold" href="/mis-postulaciones"><i class="bi bi-send-check me-1"></i>Mis Postulaciones</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/perfil"><i class="bi bi-person me-1"></i>Mi Perfil</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
+            <div>
+                <h2 class="fw-bold text-primary mb-1"><i class="bi bi-send-check-fill me-2"></i>Mis Postulaciones</h2>
+                <p class="text-muted mb-0">Haz seguimiento al estado de tus aplicaciones laborales.</p>
+            </div>
+        </div>
+
+        <div class="row" id="postulaciones-container">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Cargando tus postulaciones...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalles de Postulación -->
+    <div class="modal fade" id="postulacionDetalleModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold" id="det-modal-title">Detalles de Postulación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <!-- Timeline de Estado -->
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-clock-history me-2"></i>Estado de Avance</h6>
+                            <div class="d-flex justify-content-between text-center position-relative pt-2" id="timeline-container">
+                                <!-- Generado por JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <!-- Detalles de la Oferta -->
+                        <div class="col-lg-6">
+                            <div class="card shadow-sm border-0 h-100">
+                                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                                    <h5 class="fw-bold"><i class="bi bi-briefcase-fill text-primary me-2"></i>Cargo Solicitado</h5>
+                                </div>
+                                <div class="card-body">
+                                    <h4 id="det-oferta-titulo" class="text-dark fw-bold mb-1"></h4>
+                                    <h6 id="det-oferta-empresa" class="text-muted mb-4"></h6>
+                                    <p id="det-oferta-descripcion" style="white-space: pre-wrap; font-size: 0.95rem;" class="text-secondary"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CV Enviado -->
+                        <div class="col-lg-6">
+                            <div class="card shadow-sm border-0 h-100">
+                                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                                    <h5 class="fw-bold"><i class="bi bi-file-person-fill text-primary me-2"></i>Currículum Enviado</h5>
+                                </div>
+                                <div class="card-body bg-light m-3 rounded" id="det-cv-container">
+                                    <!-- CV rendered here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Feedback -->
+                    <div class="card shadow-sm border-0 mt-4" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold text-success mb-3"><i class="bi bi-robot me-2"></i>Análisis de IA (Histórico)</h5>
+                            <p class="text-dark mb-2">Este fue el análisis generado en el momento que enviaste tu postulación:</p>
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge bg-success fs-6 me-3" id="det-ia-score"></span>
+                            </div>
+                            <p id="det-ia-feedback" class="text-secondary mb-0" style="white-space: pre-wrap;"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const userData = localStorage.getItem('user');
+        if (!userData) window.location.href = '/login';
+        const user = JSON.parse(userData);
+
+        if (user.rol !== 'postulante') {
+            alert('Acceso no autorizado');
+            window.location.href = '/dashboard';
+        }
+
+        document.addEventListener('DOMContentLoaded', loadPostulaciones);
+
+        function getStatusBadge(estado) {
+            const map = {
+                'enviada': '<span class="badge status-enviada"><i class="bi bi-paperclip me-1"></i>Enviada</span>',
+                'en revisión': '<span class="badge status-revision"><i class="bi bi-search me-1"></i>En Revisión</span>',
+                'entrevistado': '<span class="badge status-entrevistado"><i class="bi bi-chat-dots me-1"></i>Entrevistado</span>',
+                'contratado': '<span class="badge status-contratado"><i class="bi bi-check-circle-fill me-1"></i>Contratado</span>',
+                'rechazado': '<span class="badge status-rechazado"><i class="bi bi-x-circle-fill me-1"></i>Cerrado</span>',
+            };
+            return map[estado] || `<span class="badge bg-secondary">${estado}</span>`;
+        }
+
+        function formatDate(isoString) {
+            const d = new Date(isoString);
+            return d.toLocaleDateString('es-CL', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        let postulacionesList = [];
+
+        async function loadPostulaciones() {
+            try {
+                const res = await fetch(`/api/postulaciones/postulante/${user.id}`);
+                const data = await res.json();
+                
+                const container = document.getElementById('postulaciones-container');
+                
+                if (data.success) {
+                    if (data.data.length === 0) {
+                        container.innerHTML = `
+                            <div class="col-12 text-center py-5">
+                                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3 text-muted">No has enviado ninguna postulación aún.</h5>
+                                <a href="/vacantes" class="btn btn-primary mt-3">Explorar Vacantes</a>
+                            </div>`;
+                        return;
+                    }
+
+                    postulacionesList = data.data;
+                    
+                    let html = '';
+                    postulacionesList.forEach((p, index) => {
+                        html += `
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card shadow-sm h-100 border-0" style="cursor:pointer;" onclick="openDetalle(${index})">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <span class="badge ${p.tipo === 'practica' ? 'bg-info text-dark' : 'bg-success'} text-uppercase">${p.tipo}</span>
+                                            ${getStatusBadge(p.estado_avance)}
+                                        </div>
+                                        <h5 class="card-title fw-bold text-dark mb-1">${p.titulo}</h5>
+                                        <h6 class="card-subtitle text-muted mb-3"><i class="bi bi-building me-1"></i>${p.nombre_empresa}</h6>
+                                        
+                                        <hr class="text-secondary opacity-25">
+                                        
+                                        <div class="d-flex justify-content-between align-items-center text-secondary small">
+                                            <span><i class="bi bi-calendar3 me-1"></i>${formatDate(p.fecha_postulacion)}</span>
+                                            <span class="fw-bold text-primary" title="IA Match Score">Match: ${p.match_score}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('postulaciones-container').innerHTML = `<div class="alert alert-danger">Error de red</div>`;
+            }
+        }
+
+        function openDetalle(index) {
+            const p = postulacionesList[index];
+            
+            // Textos básicos
+            document.getElementById('det-modal-title').textContent = `Postulación: ${p.titulo}`;
+            document.getElementById('det-oferta-titulo').textContent = p.titulo;
+            document.getElementById('det-oferta-empresa').innerHTML = `<i class="bi bi-building me-1"></i>${p.nombre_empresa}`;
+            document.getElementById('det-oferta-descripcion').textContent = p.oferta_descripcion || 'No disponible.';
+            
+            document.getElementById('det-ia-score').textContent = `Match: ${p.match_score}%`;
+            document.getElementById('det-ia-feedback').textContent = p.feedback_ia || 'Sin feedback registrado.';
+
+            // Renderizar CV
+            const cvContainer = document.getElementById('det-cv-container');
+            if (p.cv_enviado) {
+                const cv = p.cv_enviado;
+                cvContainer.innerHTML = `
+                    <h5 class="fw-bold mb-1">${cv.nombre_completo || 'Sin nombre'}</h5>
+                    <p class="text-muted mb-3 small"><i class="bi bi-envelope me-1"></i>${cv.email || ''}</p>
+                    <div class="small mb-3">
+                        <div><strong>Facultad:</strong> ${cv.facultad}</div>
+                        <div><strong>Carrera:</strong> ${cv.carrera}</div>
+                    </div>
+                    <h6 class="fw-bold border-bottom pb-1" style="font-size:0.9rem;">Resumen</h6>
+                    <p class="text-secondary small" style="white-space: pre-wrap;">${cv.resumen || '-'}</p>
+                    <h6 class="fw-bold border-bottom pb-1" style="font-size:0.9rem;">Experiencia</h6>
+                    <p class="text-secondary small" style="white-space: pre-wrap;">${cv.experiencia || '-'}</p>
+                    <h6 class="fw-bold border-bottom pb-1" style="font-size:0.9rem;">Habilidades</h6>
+                    <p class="text-secondary small" style="white-space: pre-wrap;">${cv.habilidades || '-'}</p>
+                `;
+            } else {
+                cvContainer.innerHTML = '<p class="text-muted text-center my-4">No se guardó el registro del CV para esta postulación.</p>';
+            }
+
+            // Timeline
+            const states = ['enviada', 'en revisión', 'entrevistado', 'contratado'];
+            const isRechazado = p.estado_avance === 'rechazado';
+            const currentIndex = isRechazado ? 0 : states.indexOf(p.estado_avance);
+            
+            let timelineHtml = `
+                <div class="position-absolute top-50 start-0 end-0 translate-middle-y" style="height: 4px; background-color: #e2e8f0; z-index: 1; margin: 0 10%;"></div>
+            `;
+            
+            if (isRechazado) {
+                timelineHtml += `
+                    <div class="position-relative z-index-2 w-100 text-center">
+                        <div class="rounded-circle bg-danger text-white d-inline-flex align-items-center justify-content-center mx-auto mb-2" style="width:40px; height:40px; z-index:2; position:relative;"><i class="bi bi-x-lg"></i></div>
+                        <div class="fw-bold text-danger small">Proceso Cerrado / Rechazado</div>
+                    </div>`;
+            } else {
+                states.forEach((state, i) => {
+                    const active = i <= currentIndex;
+                    const color = active ? 'bg-primary' : 'bg-secondary bg-opacity-25';
+                    const textColor = active ? 'text-primary fw-bold' : 'text-muted';
+                    const icon = state === 'enviada' ? 'bi-paperclip' : (state === 'en revisión' ? 'bi-search' : (state === 'entrevistado' ? 'bi-chat-dots' : 'bi-check-lg'));
+                    
+                    timelineHtml += `
+                        <div class="position-relative z-index-2" style="flex:1;">
+                            <div class="rounded-circle ${color} ${active ? 'text-white' : 'text-secondary'} d-inline-flex align-items-center justify-content-center mx-auto mb-2" style="width:40px; height:40px; z-index:2; position:relative;">
+                                <i class="bi ${icon}"></i>
+                            </div>
+                            <div class="${textColor} small text-capitalize">${state}</div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('timeline-container').innerHTML = timelineHtml;
+
+            const modal = new bootstrap.Modal(document.getElementById('postulacionDetalleModal'));
+            modal.show();
+        }
+    </script>
+</body>
+</html>

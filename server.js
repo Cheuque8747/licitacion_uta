@@ -4,7 +4,7 @@ const path = require('path');
 const db = require('./src/backend-core/config/db');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000; // ⚠️ Puerto bloqueado en 3000 por el upstream de Nginx (VM1)
 
 // Middleware
 app.use(express.json());
@@ -21,10 +21,15 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// Servir frontend view
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'src/frontend/views/index.html'));
-});
+// Rutas de la API
+app.use('/api/auth', require('./src/backend-core/routes/auth.routes'));
+app.use('/api/admin', require('./src/backend-core/routes/admin.routes'));
+app.use('/api/perfil', require('./src/backend-core/routes/perfil.routes'));
+app.use('/api/ofertas', require('./src/backend-core/routes/ofertas.routes'));
+app.use('/api/postulaciones', require('./src/backend-core/routes/postulaciones.routes'));
+
+// Rutas de Vistas (Frontend)
+app.use('/', require('./src/backend-core/routes/view.routes'));
 
 app.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
