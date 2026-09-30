@@ -1,5 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const { verificarToken, verificarRol } = require('../middlewares/auth');
+
+router.use(verificarToken);
+router.use(verificarRol(['administrador', 'reclutador', 'postulante']));
 const postulacionesController = require('../controllers/postulaciones.controller');
 
 router.post('/', postulacionesController.createPostulacion);

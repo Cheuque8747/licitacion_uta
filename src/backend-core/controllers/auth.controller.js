@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const jwt = require('jsonwebtoken');
 // Nota: Para producción usar 'bcrypt' para encriptar la contraseña. Aquí se simplifica para la demostración.
 
 exports.register = async (req, res) => {
@@ -31,9 +32,12 @@ exports.register = async (req, res) => {
             );
         }
 
+        const token = jwt.sign({ id: newUser.id, rol: newUser.rol }, process.env.JWT_SECRET, { expiresIn: '8h' });
+
         res.status(201).json({
             success: true,
-            user: newUser
+            user: newUser,
+            token: token
         });
 
     } catch (error) {
@@ -86,9 +90,12 @@ exports.login = async (req, res) => {
         // Remover password antes de enviar al frontend
         delete user.password_hash;
 
+        const token = jwt.sign({ id: user.id, rol: user.rol }, process.env.JWT_SECRET, { expiresIn: '8h' });
+
         res.json({
             success: true,
-            user: user
+            user: user,
+            token: token
         });
 
     } catch (error) {

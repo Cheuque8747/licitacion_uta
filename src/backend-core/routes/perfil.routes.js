@@ -1,5 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const { verificarToken, verificarRol } = require('../middlewares/auth');
+
+router.use(verificarToken);
+router.use(verificarRol(['administrador', 'reclutador', 'postulante']));
 const perfilController = require('../controllers/perfil.controller');
 
 // Obtener perfil

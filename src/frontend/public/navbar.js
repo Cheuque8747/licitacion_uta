@@ -1,4 +1,4 @@
-async function renderNavbar(activePage = '') {
+﻿async function renderNavbar(activePage = '') {
     const navContainer = document.createElement('div');
     document.body.insertBefore(navContainer, document.body.firstChild);
     
@@ -16,7 +16,7 @@ async function renderNavbar(activePage = '') {
     if (user.rol === 'admin') {
         linksHTML = `
             <li class="nav-item"><a class="nav-link ${activePage==='dashboard'?'active fw-bold':''}" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link ${activePage==='admin_users'?'active fw-bold':''}" href="/admin-users"><i class="bi bi-people me-1"></i>Gestión Usuarios</a></li>
+            <li class="nav-item"><a class="nav-link ${activePage==='admin_users'?'active fw-bold':''}" href="/admin-users"><i class="bi bi-people me-1"></i>GestiÃ³n Usuarios</a></li>
         `;
     } else if (user.rol === 'reclutador') {
         linksHTML = `
@@ -50,7 +50,7 @@ async function renderNavbar(activePage = '') {
                 <div class="d-flex align-items-center mt-2 mt-lg-0">
                     <span class="me-3 fw-medium text-light"><i class="bi bi-person-circle me-1"></i>${user.nombre_completo.split(' ')[0]} (${user.rol})</span>
                     <button class="btn btn-outline-danger btn-sm" onclick="logout()">
-                        <i class="bi bi-box-arrow-right me-1"></i>Cerrar Sesión
+                        <i class="bi bi-box-arrow-right me-1"></i>Cerrar SesiÃ³n
                     </button>
                 </div>
             </div>
@@ -65,3 +65,4 @@ function logout() {
     localStorage.removeItem('user'); // Importante para limpiar la sesion antigua
     window.location.href = '/login';
 }
+
