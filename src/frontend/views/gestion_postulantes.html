@@ -118,25 +118,42 @@
                         `;
                     });
                     list.innerHTML = html;
+                    
+                    // Comprobar si hay openChat en la URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const openChatId = urlParams.get('openChat');
+                    const ofertaId = urlParams.get('ofertaId');
+                    if (openChatId && ofertaId) {
+                        selectOferta(ofertaId, null, openChatId);
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    } else if (openChatId) {
+                        alert("Notificación abierta. Selecciona la vacante a la izquierda para ver el candidato.");
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
                 }
             } catch (error) {
                 console.error(error);
             }
         }
 
-        async function selectOferta(ofertaId, titulo) {
+        async function selectOferta(ofertaId, titulo, autoOpenChatId = null) {
             // Actualizar UI
             document.querySelectorAll('.oferta-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`oferta-item-${ofertaId}`).classList.add('active');
+            const item = document.getElementById(`oferta-item-${ofertaId}`);
+            if(item) item.classList.add('active');
             
             document.getElementById('welcome-state').classList.add('d-none');
             document.getElementById('candidatos-state').classList.remove('d-none');
             
-            document.getElementById('current-oferta-title').textContent = titulo;
+            document.getElementById('current-oferta-title').textContent = titulo || 'Vacante Seleccionada';
             currentSelectedOferta = ofertaId;
 
             // Cargar postulantes
-            loadPostulantes(ofertaId);
+            await loadPostulantes(ofertaId);
+            
+            if (autoOpenChatId) {
+                setTimeout(() => abrirModalCV(autoOpenChatId), 500); // Dar tiempo a que se renderice
+            }
         }
 
         async function loadPostulantes(ofertaId) {
@@ -182,12 +199,14 @@
                                     </select>
                                 </td>
                                 <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-primary" title="Ver CV Base" onclick="alert('Funcionalidad para ver el CV detallado en construcción. Match IA: ${p.match_score}%')">
-                                        <i class="bi bi-file-earmark-person"></i> Ver Perfil
+                                    <button class="btn btn-sm btn-outline-primary" title="Ver CV y Chat" onclick="abrirModalCV(${p.postulacion_id})">
+                                        <i class="bi bi-chat-text"></i> CV & Chat
                                     </button>
                                 </td>
                             </tr>
                         `;
+                        window.postulantesData = window.postulantesData || {};
+                        window.postulantesData[p.postulacion_id] = p;
                     });
                     tbody.innerHTML = html;
                 }
@@ -216,7 +235,138 @@
                 alert('Error de conexión.');
             }
         }
+
+        async function abrirModalCV(postulacionId) {
+            const p = window.postulantesData[postulacionId];
+            if(!p) return;
+
+            document.getElementById('modal-cv-name').textContent = p.nombre_completo;
+            const cv = p.cv_enviado || {};
+            document.getElementById('modal-cv-resumen').textContent = cv.resumen || 'No hay información';
+            document.getElementById('modal-cv-experiencia').textContent = cv.experiencia || 'No hay información';
+            document.getElementById('modal-cv-habilidades').textContent = cv.habilidades || 'No hay información';
+            
+            document.getElementById('chat-postulacion-id').value = postulacionId;
+            document.getElementById('chat-messages').innerHTML = '<div class="text-center text-muted small">Cargando mensajes...</div>';
+            
+            const modal = new bootstrap.Modal(document.getElementById('cvChatModal'));
+            modal.show();
+
+            cargarMensajesChat(postulacionId);
+        }
+
+        async function cargarMensajesChat(postulacionId) {
+            try {
+                const res = await fetch(`/api/chat/${postulacionId}`);
+                const data = await res.json();
+                const container = document.getElementById('chat-messages');
+                
+                if(data.success) {
+                    if(data.data.length === 0) {
+                        container.innerHTML = '<div class="text-center text-muted small mt-4">No hay mensajes. ¡Inicia la conversación!</div>';
+                        return;
+                    }
+                    let html = '';
+                    let separadorMostrado = false;
+                    data.data.forEach(m => {
+                        const isMe = m.emisor_id == user.id;
+                        
+                        if (!isMe && m.leido == false && !separadorMostrado) {
+                            html += `<div class="text-center my-3"><span class="badge bg-danger rounded-pill px-3 shadow-sm">Nuevos Mensajes</span></div>`;
+                            separadorMostrado = true;
+                        }
+
+                        html += `
+                            <div class="mb-2 text-${isMe ? 'end' : 'start'}">
+                                <div class="d-inline-block p-2 rounded text-start" style="max-width: 85%; ${isMe ? 'background-color: #d1e7dd;' : 'background-color: #f8f9fa; border: 1px solid #dee2e6;'}">
+                                    <small class="fw-bold d-block" style="font-size:0.7rem;">${m.nombre_completo}</small>
+                                    <span style="font-size:0.9rem;">${m.mensaje}</span>
+                                    <small class="text-muted d-block text-end" style="font-size:0.65rem; margin-top:2px;">${new Date(m.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                    container.scrollTop = container.scrollHeight;
+                    
+                    if (typeof checkNotificaciones === 'function') setTimeout(checkNotificaciones, 500);
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        async function enviarMensaje() {
+            const input = document.getElementById('chat-input');
+            const mensaje = input.value.trim();
+            const postulacionId = document.getElementById('chat-postulacion-id').value;
+            
+            if(!mensaje || !postulacionId) return;
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ postulacion_id: postulacionId, mensaje })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    input.value = '';
+                    cargarMensajesChat(postulacionId);
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
     </script>
 <script>renderNavbar('gestion_postulantes');</script>
+
+    <!-- Modal CV y Chat -->
+    <div class="modal fade" id="cvChatModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold">Perfil del Candidato: <span id="modal-cv-name" class="text-primary"></span></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-0">
+            <div class="row g-0">
+                <!-- Lado Izquierdo: CV -->
+                <div class="col-md-7 p-4 border-end" style="max-height: 60vh; overflow-y: auto;">
+                    <h6 class="fw-bold text-secondary text-uppercase mb-3" style="font-size:0.8rem;">Currículum Adjunto</h6>
+                    
+                    <h6 class="fw-bold mb-1">Resumen Profesional</h6>
+                    <p class="small text-muted mb-4" id="modal-cv-resumen" style="white-space: pre-wrap;"></p>
+                    
+                    <h6 class="fw-bold mb-1">Experiencia</h6>
+                    <p class="small text-muted mb-4" id="modal-cv-experiencia" style="white-space: pre-wrap;"></p>
+                    
+                    <h6 class="fw-bold mb-1">Habilidades</h6>
+                    <p class="small text-muted mb-0" id="modal-cv-habilidades" style="white-space: pre-wrap;"></p>
+                </div>
+                
+                <!-- Lado Derecho: Chat -->
+                <div class="col-md-5 d-flex flex-column" style="height: 60vh; background-color: #fff;">
+                    <div class="p-3 border-bottom bg-light">
+                        <h6 class="fw-bold mb-0"><i class="bi bi-chat-dots me-2"></i>Chat con Candidato</h6>
+                    </div>
+                    
+                    <div id="chat-messages" class="flex-grow-1 p-3" style="overflow-y: auto; background-color: #fafafa;">
+                        <!-- Mensajes aquí -->
+                    </div>
+                    
+                    <div class="p-3 border-top bg-white">
+                        <input type="hidden" id="chat-postulacion-id">
+                        <div class="input-group">
+                            <input type="text" id="chat-input" class="form-control form-control-sm" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                            <button class="btn btn-primary btn-sm" onclick="enviarMensaje()"><i class="bi bi-send"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 </body>
 </html>

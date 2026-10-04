@@ -36,29 +36,32 @@
         </div>
     </div>
 
-    <!-- Modal Detalles de Postulación -->
+    <!-- Modal Detalles de Postulación (Estilo Reclutador) -->
     <div class="modal fade" id="postulacionDetalleModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header bg-dark text-white">
                     <h5 class="modal-title fw-bold" id="det-modal-title">Detalles de Postulación</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4 bg-light">
-                    <!-- Timeline de Estado -->
-                    <div class="card shadow-sm border-0 mb-4">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-clock-history me-2"></i>Estado de Avance</h6>
-                            <div class="d-flex justify-content-between text-center position-relative pt-2" id="timeline-container">
-                                <!-- Generado por JS -->
+                <div class="modal-body p-0">
+                    <div class="row g-0">
+                        
+                        <!-- Columna Izquierda: Detalles, Timeline, CV e IA -->
+                        <div class="col-md-7 p-4 border-end" style="max-height: 70vh; overflow-y: auto; background-color: #f8fafc;">
+                            
+                            <!-- Timeline -->
+                            <div class="card shadow-sm border-0 mb-4">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-clock-history me-2"></i>Estado de Avance</h6>
+                                    <div class="d-flex justify-content-between text-center position-relative pt-2" id="timeline-container">
+                                        <!-- Generado por JS -->
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="row g-4">
-                        <!-- Detalles de la Oferta -->
-                        <div class="col-lg-6">
-                            <div class="card shadow-sm border-0 h-100">
+                            
+                            <!-- Detalles de la Oferta -->
+                            <div class="card shadow-sm border-0 mb-4">
                                 <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
                                     <h5 class="fw-bold"><i class="bi bi-briefcase-fill text-primary me-2"></i>Cargo Solicitado</h5>
                                 </div>
@@ -68,11 +71,26 @@
                                     <p id="det-oferta-descripcion" style="white-space: pre-wrap; font-size: 0.95rem;" class="text-secondary"></p>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- CV Enviado -->
-                        <div class="col-lg-6">
-                            <div class="card shadow-sm border-0 h-100">
+                            
+                            <!-- AI Feedback (Comprimido) -->
+                            <div class="accordion mb-4 shadow-sm" id="accordionIA">
+                                <div class="accordion-item" style="border: 1px solid #bbf7d0;">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIA" style="background-color: #f0fdf4; color: #16a34a;">
+                                            <i class="bi bi-robot me-2"></i><strong>Análisis de IA (Histórico)</strong>
+                                            <span class="badge bg-success ms-3" id="det-ia-score"></span>
+                                        </button>
+                                    </h2>
+                                    <div id="collapseIA" class="accordion-collapse collapse" data-bs-parent="#accordionIA">
+                                        <div class="accordion-body bg-light">
+                                            <p id="det-ia-feedback" class="text-secondary small mb-0" style="white-space: pre-wrap;"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- CV Enviado -->
+                            <div class="card shadow-sm border-0 mb-2">
                                 <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
                                     <h5 class="fw-bold"><i class="bi bi-file-person-fill text-primary me-2"></i>Currículum Enviado</h5>
                                 </div>
@@ -80,19 +98,28 @@
                                     <!-- CV rendered here -->
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- AI Feedback -->
-                    <div class="card shadow-sm border-0 mt-4" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold text-success mb-3"><i class="bi bi-robot me-2"></i>Análisis de IA (Histórico)</h5>
-                            <p class="text-dark mb-2">Este fue el análisis generado en el momento que enviaste tu postulación:</p>
-                            <div class="d-flex align-items-center mb-3">
-                                <span class="badge bg-success fs-6 me-3" id="det-ia-score"></span>
-                            </div>
-                            <p id="det-ia-feedback" class="text-secondary mb-0" style="white-space: pre-wrap;"></p>
                         </div>
+                        
+                        <!-- Columna Derecha: Chat -->
+                        <div class="col-md-5 d-flex flex-column" style="height: 70vh; background-color: #fff;">
+                            <div class="p-3 border-bottom bg-light">
+                                <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-chat-dots-fill me-2"></i>Chat con Empresa</h6>
+                            </div>
+                            
+                            <div id="chat-messages" class="flex-grow-1 p-3" style="overflow-y: auto; background-color: #fafafa;">
+                                <!-- Mensajes aquí -->
+                            </div>
+                            
+                            <div class="p-3 border-top bg-white">
+                                <input type="hidden" id="chat-postulacion-id">
+                                <div class="input-group">
+                                    <input type="text" id="chat-input" class="form-control" placeholder="Escribe al reclutador..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+                                    <button class="btn btn-primary" onclick="enviarMensaje()"><i class="bi bi-send"></i> Enviar</button>
+                                </div>
+                            </div>
+                        </div>
+                        
                     </div>
                 </div>
             </div>
@@ -176,6 +203,17 @@
                         `;
                     });
                     container.innerHTML = html;
+
+                    // Abrir chat automáticamente si viene en la URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const openChatId = urlParams.get('openChat');
+                    if (openChatId) {
+                        const indexToOpen = postulacionesList.findIndex(p => p.postulacion_id == openChatId);
+                        if (indexToOpen !== -1) {
+                            openDetalle(indexToOpen);
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        }
+                    }
                 } else {
                     container.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
                 }
@@ -252,8 +290,79 @@
             }
             document.getElementById('timeline-container').innerHTML = timelineHtml;
 
+            // Preparar Chat
+            document.getElementById('chat-postulacion-id').value = p.postulacion_id;
+            document.getElementById('chat-messages').innerHTML = '<div class="text-center text-muted mt-4">Cargando mensajes...</div>';
+
             const modal = new bootstrap.Modal(document.getElementById('postulacionDetalleModal'));
             modal.show();
+
+            cargarMensajesChat(p.postulacion_id);
+        }
+
+        async function cargarMensajesChat(postulacionId) {
+            try {
+                const res = await fetch(`/api/chat/${postulacionId}`);
+                const data = await res.json();
+                const container = document.getElementById('chat-messages');
+                
+                if(data.success) {
+                    if(data.data.length === 0) {
+                        container.innerHTML = '<div class="text-center text-muted small mt-4">No hay mensajes. Si tienes dudas, escríbele al reclutador.</div>';
+                        return;
+                    }
+                    let html = '';
+                    let separadorMostrado = false;
+                    data.data.forEach(m => {
+                        const isMe = m.emisor_id == user.id;
+                        
+                        // Si el mensaje NO es mío, NO estaba leído, y aún no mostramos el separador
+                        if (!isMe && m.leido == false && !separadorMostrado) {
+                            html += `<div class="text-center my-3"><span class="badge bg-danger rounded-pill px-3 shadow-sm">Nuevos Mensajes</span></div>`;
+                            separadorMostrado = true;
+                        }
+
+                        html += `
+                            <div class="mb-2 text-${isMe ? 'end' : 'start'}">
+                                <div class="d-inline-block p-2 rounded text-start" style="max-width: 85%; ${isMe ? 'background-color: #d1e7dd;' : 'background-color: #e2e3e5; border: 1px solid #ced4da;'}">
+                                    <small class="fw-bold d-block" style="font-size:0.7rem;">${isMe ? 'Tú' : m.nombre_completo}</small>
+                                    <span style="font-size:0.9rem;">${m.mensaje}</span>
+                                    <small class="text-muted d-block text-end" style="font-size:0.65rem; margin-top:2px;">${new Date(m.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                    container.scrollTop = container.scrollHeight;
+                    
+                    if (typeof checkNotificaciones === 'function') setTimeout(checkNotificaciones, 500);
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        async function enviarMensaje() {
+            const input = document.getElementById('chat-input');
+            const mensaje = input.value.trim();
+            const postulacionId = document.getElementById('chat-postulacion-id').value;
+            
+            if(!mensaje || !postulacionId) return;
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ postulacion_id: postulacionId, mensaje })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    input.value = '';
+                    cargarMensajesChat(postulacionId);
+                }
+            } catch(e) {
+                console.error(e);
+            }
         }
     </script>
 <script>renderNavbar('mis_postulaciones');</script>

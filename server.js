@@ -27,10 +27,38 @@ app.use('/api/admin', require('./src/backend-core/routes/admin.routes'));
 app.use('/api/perfil', require('./src/backend-core/routes/perfil.routes'));
 app.use('/api/ofertas', require('./src/backend-core/routes/ofertas.routes'));
 app.use('/api/postulaciones', require('./src/backend-core/routes/postulaciones.routes'));
+app.use('/api/chat', require('./src/backend-core/routes/chat.routes'));
 
 // Rutas de Vistas (Frontend)
 app.use('/', require('./src/backend-core/routes/view.routes'));
 
-app.listen(port, () => {
+const http = require('http');
+const { Server } = require('socket.io');
+
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: '*' } });
+
+// Mapeo de usuarios conectados: userId -> socketId
+const connectedUsers = new Map();
+
+io.on('connection', (socket) => {
+    socket.on('register', (userId) => {
+        connectedUsers.set(userId, socket.id);
+    });
+
+    socket.on('disconnect', () => {
+        for (const [userId, sockId] of connectedUsers.entries()) {
+            if (sockId === socket.id) {
+                connectedUsers.delete(userId);
+                break;
+            }
+        }
+    });
+});
+
+app.set('io', io);
+app.set('connectedUsers', connectedUsers);
+
+server.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
 });

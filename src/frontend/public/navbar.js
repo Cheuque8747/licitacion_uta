@@ -63,9 +63,20 @@ async function renderNavbar(activePage = '') {
                     ${linksHTML}
                 </ul>
                 <div class="d-flex align-items-center mt-2 mt-lg-0">
+                    <div class="me-3 dropdown" id="chat-notification-container">
+                        <div class="position-relative" style="cursor:pointer;" data-bs-toggle="dropdown" aria-expanded="false" onclick="cargarDetalleNotificaciones()">
+                            <i class="bi bi-bell-fill text-light fs-5"></i>
+                            <span id="chat-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                                0
+                            </span>
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="width: 300px; max-height: 400px; overflow-y: auto;" id="notificaciones-dropdown">
+                            <li><span class="dropdown-item text-center text-muted small">Cargando...</span></li>
+                        </ul>
+                    </div>
                     <span class="me-3 fw-medium text-light"><i class="bi bi-person-circle me-1"></i>${user.nombre_completo.split(' ')[0]} (${user.rol})</span>
                     <button class="btn btn-outline-danger btn-sm" onclick="logout()">
-                        <i class="bi bi-box-arrow-right me-1"></i>Cerrar SesiÃ³n
+                        <i class="bi bi-box-arrow-right me-1"></i>Cerrar Sesión
                     </button>
                 </div>
             </div>
@@ -73,6 +84,136 @@ async function renderNavbar(activePage = '') {
     </nav>
     <div style="height: 70px;"></div> <!-- Spacer para fixed-top -->
     `;
+    
+    
+    if(user.rol === 'postulante' || user.rol === 'reclutador') {
+        checkNotificaciones(); // Llama al inicio para ver si hay mensajes viejos
+        inicializarSocket(user.id); // Reemplaza al polling
+    }
+}
+
+function inicializarSocket(userId) {
+    // Inyectar el script de socket.io dinámicamente si no existe
+    if (!document.getElementById('socketio-script')) {
+        const script = document.createElement('script');
+        script.id = 'socketio-script';
+        script.src = '/socket.io/socket.io.js';
+        script.onload = () => {
+            window.socket = io();
+            window.socket.emit('register', userId);
+
+            window.socket.on('nuevo_mensaje', (msg) => {
+                // Si el chat está abierto y corresponde a esta postulación, lo pintamos
+                const chatPostulacionId = document.getElementById('chat-postulacion-id');
+                if (chatPostulacionId && chatPostulacionId.value == msg.postulacion_id) {
+                    if (typeof cargarMensajesChat === 'function') {
+                        cargarMensajesChat(msg.postulacion_id);
+                    }
+                } else {
+                    // Si no está abierto, incrementamos la campanita
+                    checkNotificaciones();
+                }
+            });
+        };
+        document.head.appendChild(script);
+    }
+}
+
+async function checkNotificaciones() {
+    try {
+        const res = await fetch('/api/chat/notificaciones/noleidos');
+        const data = await res.json();
+        if(data.success) {
+            const badge = document.getElementById('chat-badge');
+            if(data.count > 0) {
+                badge.textContent = data.count;
+                badge.classList.remove('d-none');
+            } else {
+                badge.classList.add('d-none');
+            }
+        }
+    } catch(e) {
+        console.error('Error fetching notifications');
+    }
+}
+
+async function cargarDetalleNotificaciones() {
+    try {
+        const res = await fetch('/api/chat/notificaciones/detalle');
+        const data = await res.json();
+        const drop = document.getElementById('notificaciones-dropdown');
+        
+        if (data.success) {
+            if (data.data.length === 0) {
+                drop.innerHTML = '<li><span class="dropdown-item text-center text-muted small">No hay mensajes nuevos</span></li>';
+                return;
+            }
+            let html = '';
+            data.data.forEach(m => {
+                html += `
+                    <li>
+                        <a class="dropdown-item border-bottom py-2" href="#" onclick="abrirChatDesdeNotificacion(${m.postulacion_id}, ${m.oferta_id}); return false;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="small text-primary">${m.remitente}</strong>
+                                <small class="text-muted" style="font-size:0.65rem;">${new Date(m.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                            </div>
+                            <div class="small text-truncate text-muted">${m.mensaje}</div>
+                            <div class="small text-truncate" style="font-size:0.7rem; color:#6c757d;"><i class="bi bi-briefcase me-1"></i>${m.oferta_titulo}</div>
+                        </a>
+                    </li>
+                `;
+            });
+            html += '<li><hr class="dropdown-divider"></li>';
+            html += '<li><div class="d-flex justify-content-between px-3 pb-2 pt-1"><a class="btn btn-sm btn-outline-secondary w-100 me-1" href="#" onclick="limpiarNotificaciones(); return false;">Limpiar alertas</a><a class="btn btn-sm btn-primary w-100 ms-1" href="' + (JSON.parse(localStorage.getItem('user')).rol==='postulante'?'/mis-postulaciones':'/gestion-postulantes') + '">Ir al Panel</a></div></li>';
+            drop.innerHTML = html;
+        }
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+async function limpiarNotificaciones() {
+    try {
+        const res = await fetch('/api/chat/notificaciones/marcar-leido', { method: 'PUT' });
+        const data = await res.json();
+        if (data.success) {
+            // Refrescar el badge y el dropdown
+            document.getElementById('chat-badge').classList.add('d-none');
+            const drop = document.getElementById('notificaciones-dropdown');
+            drop.innerHTML = '<li><span class="dropdown-item text-center text-muted small">No hay mensajes nuevos</span></li>';
+        }
+    } catch (e) {
+        console.error('Error al limpiar notificaciones:', e);
+    }
+}
+
+function abrirChatDesdeNotificacion(postulacionId, ofertaId = null) {
+    // Si estamos en la página correcta, llamamos a la función de abrir modal
+    if (typeof abrirModalCV === 'function') {
+        // En gestion_postulantes
+        if (ofertaId) {
+            // Seleccionamos la oferta y le decimos que auto-abra el chat de este postulante
+            selectOferta(ofertaId, null, postulacionId);
+        } else {
+            abrirModalCV(postulacionId);
+        }
+    } else if (typeof openDetalle === 'function' && typeof postulacionesList !== 'undefined') {
+        // En mis_postulaciones, necesitamos el índice.
+        const index = postulacionesList.findIndex(p => p.postulacion_id == postulacionId);
+        if (index !== -1) {
+            openDetalle(index);
+        } else {
+            window.location.href = '/mis-postulaciones?openChat=' + postulacionId;
+        }
+    } else {
+        // Si no estamos en la vista adecuada, redirigir con los parámetros openChat y ofertaId
+        const user = JSON.parse(localStorage.getItem('user'));
+        const link = user.rol === 'postulante' ? '/mis-postulaciones' : '/gestion-postulantes';
+        window.location.href = link + '?openChat=' + postulacionId + (ofertaId ? '&ofertaId=' + ofertaId : '');
+    }
+    
+    // Refrescar notificaciones para apagar la campanita (porque al abrir el chat, el backend las marcará como leídas)
+    setTimeout(checkNotificaciones, 1000);
 }
 
 function logout() {

@@ -89,3 +89,13 @@ CREATE TABLE contenidos_cms (
     url_imagen VARCHAR(255),
     fecha_publicacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Mensajes de Chat entre Postulante y Reclutador
+CREATE TABLE mensajes_chat (
+    id SERIAL PRIMARY KEY,
+    postulacion_id INTEGER REFERENCES postulaciones(id) ON DELETE CASCADE,
+    emisor_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
+    mensaje TEXT NOT NULL,
+    leido BOOLEAN DEFAULT FALSE,
+    fecha_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

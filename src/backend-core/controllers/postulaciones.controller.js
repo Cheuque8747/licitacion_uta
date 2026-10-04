@@ -75,7 +75,7 @@ exports.getPostulantesByOferta = async (req, res) => {
     try {
         const { id } = req.params;
         const query = `
-            SELECT p.id as postulacion_id, p.estado_avance, p.match_score, p.fecha_postulacion,
+            SELECT p.id as postulacion_id, p.estado_avance, p.match_score, p.fecha_postulacion, p.cv_enviado,
                    u.id as usuario_id, u.nombre_completo, u.email,
                    perf.carrera, perf.facultad
             FROM postulaciones p
