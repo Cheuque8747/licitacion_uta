@@ -18,7 +18,8 @@ exports.analizarMatchIA = async (req, res) => {
 // Postulante: Crear una nueva postulación
 exports.createPostulacion = async (req, res) => {
     try {
-        const { oferta_id, postulante_id, cv_enviado, match_score, feedback_ia } = req.body;
+        const { oferta_id, cv_enviado, match_score, feedback_ia } = req.body;
+        const postulante_id = req.user.id;
 
         // Verificar si ya postuló
         const check = await db.query(
@@ -48,6 +49,9 @@ exports.createPostulacion = async (req, res) => {
 exports.getPostulacionesByPostulante = async (req, res) => {
     try {
         const { id } = req.params;
+        if (req.user.rol === 'postulante' && parseInt(id) !== req.user.id) {
+            return res.status(403).json({ success: false, error: 'No autorizado para ver postulaciones ajenas' });
+        }
         const query = `
             SELECT p.id as postulacion_id, p.estado_avance, p.fecha_postulacion, p.match_score, p.feedback_ia, p.cv_enviado,
                    o.titulo, o.tipo, o.descripcion as oferta_descripcion,
@@ -93,17 +97,22 @@ exports.updateEstadoPostulacion = async (req, res) => {
     try {
         const { id } = req.params;
         const { estado_avance } = req.body;
+        const reclutador_id = req.user.id;
 
+        // Se usa Solución A: Solo el reclutador creador de la oferta puede modificarla
         const updateQuery = `
             UPDATE postulaciones 
             SET estado_avance = $1
             WHERE id = $2
+            AND oferta_id IN (
+                SELECT id FROM ofertas_laborales WHERE reclutador_id = $3
+            )
             RETURNING *
         `;
-        const result = await db.query(updateQuery, [estado_avance, id]);
+        const result = await db.query(updateQuery, [estado_avance, id, reclutador_id]);
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'Postulación no encontrada' });
+            return res.status(404).json({ success: false, error: 'Postulación no encontrada o no tienes permisos para modificarla' });
         }
 
         res.json({ success: true, data: result.rows[0], message: 'Estado actualizado' });

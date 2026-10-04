@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 // Nota: Para producción usar 'bcrypt' para encriptar la contraseña. Aquí se simplifica para la demostración.
 
 exports.register = async (req, res) => {
@@ -13,7 +14,7 @@ exports.register = async (req, res) => {
     rut = rut.slice(0, -1) + '-' + rut.slice(-1);
 
     try {
-        const password_hash = password; 
+        const password_hash = await bcrypt.hash(password, 10); 
 
         // INSERT básico
         const result = await db.query(
@@ -82,8 +83,8 @@ exports.login = async (req, res) => {
 
         const user = result.rows[0];
 
-        // En producción: await bcrypt.compare(password, user.password_hash)
-        if (password !== user.password_hash) {
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+        if (!isMatch) {
             return res.status(401).json({ success: false, error: 'Credenciales inválidas.' });
         }
 

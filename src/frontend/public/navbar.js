@@ -1,4 +1,19 @@
-﻿async function renderNavbar(activePage = '') {
+// Fetch Interceptor for JWT
+const originalFetch = window.fetch;
+window.fetch = async function() {
+    let [resource, config] = arguments;
+    if (typeof resource === 'string' && resource.startsWith('/api/') && !resource.startsWith('/api/auth/login') && !resource.startsWith('/api/auth/register')) {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config = config || {};
+            config.headers = config.headers || {};
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+    }
+    return originalFetch(resource, config);
+};
+
+async function renderNavbar(activePage = '') {
     const navContainer = document.createElement('div');
     document.body.insertBefore(navContainer, document.body.firstChild);
     

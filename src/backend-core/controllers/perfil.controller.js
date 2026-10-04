@@ -1,7 +1,9 @@
 const db = require('../config/db');
 
 exports.getPerfil = async (req, res) => {
-    const { id, rol, view_id } = req.query; // En prod, id y rol vienen del token. view_id es si un reclutador ve a otro.
+    const { view_id } = req.query;
+    const id = req.user.id;
+    const rol = req.user.rol;
     const targetId = view_id || id;
     const targetRol = view_id ? 'postulante' : rol; // Por ahora asumimos que si hay view_id, estamos viendo un postulante.
     
@@ -34,7 +36,9 @@ exports.getPerfil = async (req, res) => {
 };
 
 exports.savePerfil = async (req, res) => {
-    const { id, rol, perfilData } = req.body; 
+    const { perfilData } = req.body; 
+    const id = req.user.id;
+    const rol = req.user.rol;
 
     try {
         if (rol === 'postulante') {

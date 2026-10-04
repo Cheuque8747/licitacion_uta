@@ -2,7 +2,11 @@ const db = require('../config/db');
 
 exports.getOfertas = async (req, res) => {
     try {
-        const { facultad, carrera, tipo, reclutador_id, view_mode } = req.query;
+        const { facultad, carrera, tipo, view_mode } = req.query;
+        let reclutador_id = req.query.reclutador_id;
+        if (req.user && req.user.rol === 'reclutador') {
+            reclutador_id = req.user.id;
+        }
         let query = `
             SELECT o.*, e.nombre_empresa, e.rut_empresa, e.rubro
             FROM ofertas_laborales o
@@ -66,7 +70,8 @@ exports.getOfertas = async (req, res) => {
 
 exports.createOferta = async (req, res) => {
     try {
-        const { usuario_id, titulo, descripcion, experiencia_solicitada, habilidades_requeridas, tipo, facultad_requerida, carrera_requerida } = req.body;
+        const { titulo, descripcion, experiencia_solicitada, habilidades_requeridas, tipo, facultad_requerida, carrera_requerida } = req.body;
+        const usuario_id = req.user.id;
 
         const reclutadorCheck = await db.query(`SELECT empresa_id FROM perfil_reclutadores WHERE usuario_id = $1`, [usuario_id]);
         
@@ -82,7 +87,10 @@ exports.createOferta = async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'publicada', $8, $9, CURRENT_TIMESTAMP)
             RETURNING *
         `;
-        const params = [empresa_id, usuario_id, titulo, descripcion, experiencia_solicitada, habilidades_requeridas, tipo, facultad_requerida, carrera_requerida];
+        // Solución Falla de Estabilidad por Casteo: Asegurarse que siempre sea un array
+        const carrerasSeguras = Array.isArray(carrera_requerida) ? carrera_requerida : (carrera_requerida ? [carrera_requerida] : []);
+
+        const params = [empresa_id, usuario_id, titulo, descripcion, experiencia_solicitada, habilidades_requeridas, tipo, facultad_requerida, carrerasSeguras];
         
         const result = await db.query(insertQuery, params);
         res.json({ success: true, data: result.rows[0], message: 'Oferta creada exitosamente' });
