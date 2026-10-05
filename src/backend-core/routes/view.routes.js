@@ -52,4 +52,9 @@ router.get('/', (req, res) => {
     res.redirect('/login');
 });
 
+// Panel de Analítica Administrativo
+router.get('/admin/analytics', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../frontend/views/admin_analytics.html'));
+});
+
 module.exports = router;

@@ -87,7 +87,18 @@ CREATE TABLE contenidos_cms (
     titulo VARCHAR(200) NOT NULL,
     cuerpo TEXT,
     url_imagen VARCHAR(255),
+    opciones JSONB,
     fecha_publicacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Votos de Encuestas
+CREATE TABLE encuestas_votos (
+    id SERIAL PRIMARY KEY,
+    contenido_id INTEGER REFERENCES contenidos_cms(id) ON DELETE CASCADE,
+    usuario_id INTEGER REFERENCES usuarios(id),
+    opcion_seleccionada VARCHAR(255),
+    fecha_voto TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(contenido_id, usuario_id)
 );
 
 -- Mensajes de Chat entre Postulante y Reclutador

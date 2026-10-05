@@ -28,10 +28,11 @@ async function renderNavbar(activePage = '') {
     }
 
     let linksHTML = '';
-    if (user.rol === 'admin') {
+    if (user.rol === 'administrador' || user.rol === 'admin') {
         linksHTML = `
             <li class="nav-item"><a class="nav-link ${activePage==='dashboard'?'active fw-bold':''}" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link ${activePage==='admin_users'?'active fw-bold':''}" href="/admin-users"><i class="bi bi-people me-1"></i>GestiÃ³n Usuarios</a></li>
+            <li class="nav-item"><a class="nav-link ${activePage==='admin_users'?'active fw-bold':''}" href="/admin/users"><i class="bi bi-people me-1"></i>Gestión Usuarios</a></li>
+            <li class="nav-item"><a class="nav-link ${activePage==='admin_analytics'?'active fw-bold':''}" href="/admin/analytics"><i class="bi bi-bar-chart-fill me-1"></i>Analítica</a></li>
         `;
     } else if (user.rol === 'reclutador') {
         linksHTML = `

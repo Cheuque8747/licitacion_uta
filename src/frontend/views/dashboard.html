@@ -19,14 +19,135 @@
     
     
 
-    <div class="container py-5">
+    <!-- CMS Banners Edge-to-Edge -->
+    <div id="cms-banners-container" class="w-100 d-none" style="margin-top: -3rem; margin-bottom: 3rem;">
+        <div id="cmsBanners" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner" id="cms-banners-inner">
+                <!-- Banners -->
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#cmsBanners" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#cmsBanners" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            </button>
+        </div>
+    </div>
+
+    <div class="container py-3">
+
         <div class="mb-5">
             <h1 class="fw-bold">Bienvenido al Panel Principal</h1>
             <p class="text-muted fs-5">Selecciona una acción para continuar</p>
         </div>
 
-        <div class="row g-4" id="menu-cards">
+        <div class="row g-4 mb-5" id="menu-cards">
             <!-- Las tarjetas se renderizarán aquí dependiendo del rol -->
+        </div>
+        
+        <!-- CMS Noticias y Eventos -->
+        <div class="row g-4 mt-2" id="cms-content-container">
+            <!-- Noticias, Eventos, Encuestas generados por JS -->
+        </div>
+    </div>
+
+    <!-- Modal Lector de Contenidos -->
+    <div class="modal fade" id="cmsReaderModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-0 px-4 pb-4">
+                    <div id="reader-image-container" class="mb-4 text-center d-none">
+                        <img id="reader-image" src="" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain;">
+                    </div>
+                    <span class="badge bg-primary mb-2" id="reader-tipo"></span>
+                    <h2 class="fw-bold mb-3" id="reader-titulo"></h2>
+                    <div class="text-muted small mb-4 border-bottom pb-2">
+                        Por <span id="reader-autor" class="fw-bold"></span> &bull; <span id="reader-fecha"></span>
+                    </div>
+                    <div id="reader-cuerpo" style="font-size: 1.1rem; line-height: 1.6; white-space: pre-wrap;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="cmsAdminModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-richtext me-2"></i>Gestión de Contenidos (CMS)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    <div class="d-flex justify-content-between mb-3">
+                        <h6 class="fw-bold">Contenidos Publicados</h6>
+                        <button class="btn btn-primary btn-sm fw-bold" onclick="openCmsEditModal()"><i class="bi bi-plus-lg"></i> Nuevo Contenido</button>
+                    </div>
+                    <div class="table-responsive bg-white shadow-sm rounded">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Título</th>
+                                    <th>Fecha</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cms-admin-table-body">
+                                <!-- Tabla CMS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Formulario CMS -->
+    <div class="modal fade" id="cmsEditModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="cms-form-title">Crear Contenido</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="cms-form">
+                        <input type="hidden" id="cms-id">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tipo de Contenido</label>
+                            <select class="form-select" id="cms-tipo" required onchange="toggleSurveyOptions()">
+                                <option value="noticia">Noticia</option>
+                                <option value="evento">Evento</option>
+                                <option value="banner">Banner Dinámico</option>
+                                <option value="encuesta">Encuesta</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="survey-options-group" style="display:none;">
+                            <label class="form-label fw-bold text-info"><i class="bi bi-ui-radios me-1"></i>Opciones de la Encuesta</label>
+                            <input type="text" class="form-control border-info" id="cms-opciones" placeholder="Ej: Opción 1, Opción 2, Opción 3 (Separadas por comas)">
+                            <div class="form-text">Si seleccionaste 'Encuesta', ingresa las opciones separadas por una coma.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Título / Titular</label>
+                            <input type="text" class="form-control" id="cms-titulo" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Cuerpo / Descripción / Link (Encuesta)</label>
+                            <textarea class="form-control" id="cms-cuerpo" rows="4"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">URL de Imagen (Opcional)</label>
+                            <input type="url" class="form-control" id="cms-url_imagen" placeholder="https://ejemplo.com/imagen.jpg">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary fw-bold" onclick="saveCms()">Guardar Contenido</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -109,12 +230,30 @@
                 `;
             } else if (rol === 'administrador') {
                 html += `
-                    <div class="col-md-4">
+                    <div class="col-md-4 mb-3">
                         <div class="card h-100 shadow-sm p-3 border-primary border-2">
                             <div class="card-body">
                                 <h4 class="card-title fw-semibold text-primary"><i class="bi bi-people-fill me-2"></i>Gestión de Usuarios</h4>
                                 <p class="card-text text-muted mt-3">Verifica empresas, edita datos y elimina cuentas del sistema.</p>
                                 <button class="btn btn-primary mt-3 w-100 fw-medium" onclick="window.location.href='/admin/users'">Abrir Panel</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 shadow-sm p-3 border-info border-2">
+                            <div class="card-body">
+                                <h4 class="card-title fw-semibold text-info"><i class="bi bi-file-earmark-richtext me-2"></i>Gestión de CMS</h4>
+                                <p class="card-text text-muted mt-3">Administra noticias, eventos, encuestas y banners de la portada.</p>
+                                <button class="btn btn-info mt-3 w-100 fw-medium text-white" onclick="openCmsAdminModal()">Gestionar Contenidos</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 shadow-sm p-3 border-dark border-2">
+                            <div class="card-body">
+                                <h4 class="card-title fw-semibold text-dark"><i class="bi bi-bar-chart-fill me-2"></i>Analítica Global</h4>
+                                <p class="card-text text-muted mt-3">Visualiza indicadores, empleabilidad y expectativas de renta.</p>
+                                <button class="btn btn-dark mt-3 w-100 fw-medium" onclick="window.location.href='/admin/analytics'">Ver Dashboards</button>
                             </div>
                         </div>
                     </div>
@@ -124,7 +263,303 @@
             container.innerHTML = html;
         }
 
-        
+        let cmsData = [];
+
+        async function loadCmsContent() {
+            try {
+                const res = await fetch('/api/cms');
+                const data = await res.json();
+                if(data.success) {
+                    cmsData = data.data;
+                    renderPublicCms();
+                }
+            } catch(e) { console.error('Error load CMS', e); }
+        }
+
+        function renderPublicCms() {
+            const banners = cmsData.filter(c => c.tipo === 'banner');
+            const others = cmsData.filter(c => c.tipo !== 'banner');
+            
+            // Banners
+            const bannerContainer = document.getElementById('cms-banners-container');
+            const bannerInner = document.getElementById('cms-banners-inner');
+            if(banners.length > 0) {
+                bannerContainer.classList.remove('d-none');
+                let bHtml = '';
+                banners.forEach((b, i) => {
+                    bHtml += `
+                        <div class="carousel-item ${i===0?'active':''}" style="height:350px; background-color:#343a40;">
+                            ${b.url_imagen ? `<img src="${b.url_imagen}" class="d-block w-100 h-100" style="object-fit:cover; opacity:0.6;">` : ''}
+                            <div class="carousel-caption d-none d-md-block" style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px;">
+                                <h2 class="fw-bold">${b.titulo}</h2>
+                                <p class="fs-5">${b.cuerpo || ''}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                bannerInner.innerHTML = bHtml;
+            } else {
+                bannerContainer.classList.add('d-none');
+            }
+
+            // Other content (News, Events, Surveys)
+            const contentContainer = document.getElementById('cms-content-container');
+            if(others.length > 0) {
+                let html = '<div class="col-12"><h3 class="fw-bold mb-4 border-bottom pb-2">Novedades y Anuncios</h3></div>';
+                others.forEach(c => {
+                    const icon = c.tipo === 'evento' ? 'bi-calendar-event text-warning' : (c.tipo === 'encuesta' ? 'bi-ui-radios text-info' : 'bi-newspaper text-primary');
+                    
+                        // Render Tarjeta (Noticia, Evento, Encuesta)
+                        const isEncuesta = c.tipo === 'encuesta';
+                        html += `
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card h-100 shadow-sm ${isEncuesta ? 'border-info' : ''}" style="cursor: pointer; transition: transform 0.2s; ${isEncuesta ? 'border-width: 2px;' : ''}" onclick="abrirLector(${c.id})" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                                    ${c.url_imagen ? `<img src="${c.url_imagen}" class="card-img-top" style="height:160px; object-fit:cover;">` : ''}
+                                    <div class="card-body">
+                                        <div class="mb-2"><span class="badge ${isEncuesta ? 'bg-info text-dark' : 'bg-secondary'} text-uppercase"><i class="bi ${icon} me-1"></i>${c.tipo}</span></div>
+                                        <h5 class="card-title fw-bold">${c.titulo}</h5>
+                                        <p class="card-text text-secondary" style="font-size:0.9rem;">${c.cuerpo ? c.cuerpo.substring(0, 100) + (c.cuerpo.length>100?'...':'') : ''}</p>
+                                    </div>
+                                    <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">${new Date(c.fecha_publicacion).toLocaleDateString()}</small>
+                                        <span class="text-primary small fw-bold">${isEncuesta ? 'Participar' : 'Leer más'} <i class="bi bi-arrow-right"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                });
+                contentContainer.innerHTML = html;
+            } else {
+                contentContainer.innerHTML = '';
+            }
+        }
+
+        async function votarEncuesta(event, id) {
+            event.preventDefault();
+            const form = event.target;
+            const opcionRadio = form.querySelector(`input[name="encuesta-${id}"]:checked`);
+            if(!opcionRadio) return;
+
+            try {
+                const res = await fetch('/api/cms/' + id + '/vote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ opcion: opcionRadio.value })
+                });
+                const resData = await res.json();
+                if(resData.success) {
+                    await loadCmsContent();
+                    // Refrescar el modal
+                    abrirLector(id);
+                } else {
+                    alert('Error: ' + resData.error);
+                }
+            } catch(e) {
+                alert('Error de red');
+            }
+        }
+
+        let readerModal;
+        function abrirLector(id) {
+            if(!readerModal) readerModal = new bootstrap.Modal(document.getElementById('cmsReaderModal'));
+            const c = cmsData.find(x => x.id === id);
+            if(!c) return;
+
+            const modalDialog = document.querySelector('#cmsReaderModal .modal-dialog');
+            const img = document.getElementById('reader-image');
+            
+            // Si es encuesta, lo hacemos más angosto (normal) y la imagen más pequeña
+            if(c.tipo === 'encuesta') {
+                modalDialog.className = 'modal-dialog';
+                img.style.maxHeight = '250px';
+            } else {
+                modalDialog.className = 'modal-dialog modal-lg';
+                img.style.maxHeight = '400px';
+            }
+
+            document.getElementById('reader-tipo').textContent = c.tipo.toUpperCase();
+            document.getElementById('reader-titulo').textContent = c.titulo;
+            document.getElementById('reader-autor').textContent = c.autor;
+            document.getElementById('reader-fecha').textContent = new Date(c.fecha_publicacion).toLocaleDateString();
+            
+            // Cuerpo normal o Encuesta
+            const cuerpoDiv = document.getElementById('reader-cuerpo');
+            let cuerpoHtml = `<p>${c.cuerpo || ''}</p>`;
+
+            if (c.tipo === 'encuesta') {
+                cuerpoHtml += `<div class="mt-4 p-4 bg-light rounded border">`;
+                if (c.ya_voto) {
+                    const totalVotos = c.resultados_votos.reduce((acc, curr) => acc + parseInt(curr.votos), 0);
+                    const opcionesDisponibles = c.opciones || [];
+                    
+                    cuerpoHtml += `<h5 class="fw-bold mb-3">Resultados de la Encuesta:</h5>`;
+                    opcionesDisponibles.forEach(op => {
+                        const votoData = c.resultados_votos.find(v => v.opcion === op);
+                        const count = votoData ? parseInt(votoData.votos) : 0;
+                        const pct = totalVotos > 0 ? Math.round((count / totalVotos) * 100) : 0;
+                        cuerpoHtml += `
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>${op}</span>
+                                    <span class="fw-bold text-muted">${pct}% (${count} votos)</span>
+                                </div>
+                                <div class="progress" style="height: 12px;">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: ${pct}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    cuerpoHtml += `<div class="text-end mt-3 small text-muted"><i class="bi bi-check-circle-fill text-success me-1"></i>Ya has votado. Total de votos: ${totalVotos}</div>`;
+                } else {
+                    const opcionesDisponibles = c.opciones || [];
+                    cuerpoHtml += `<h5 class="fw-bold mb-3">Tu Opinión Importa:</h5>`;
+                    cuerpoHtml += `<form id="form-encuesta-${c.id}" onsubmit="votarEncuesta(event, ${c.id})">`;
+                    opcionesDisponibles.forEach((op, idx) => {
+                        cuerpoHtml += `
+                            <div class="form-check mb-3 ms-2">
+                                <input class="form-check-input" style="transform: scale(1.2);" type="radio" name="encuesta-${c.id}" id="enc-${c.id}-${idx}" value="${op}" required>
+                                <label class="form-check-label ms-2 fs-6" for="enc-${c.id}-${idx}">${op}</label>
+                            </div>
+                        `;
+                    });
+                    cuerpoHtml += `<button type="submit" class="btn btn-info fw-bold px-4 mt-2 w-100">Enviar Voto</button></form>`;
+                }
+                cuerpoHtml += `</div>`;
+            }
+            cuerpoDiv.innerHTML = cuerpoHtml;
+
+            const imgContainer = document.getElementById('reader-image-container');
+            if(c.url_imagen) {
+                img.src = c.url_imagen;
+                imgContainer.classList.remove('d-none');
+            } else {
+                imgContainer.classList.add('d-none');
+            }
+            
+            readerModal.show();
+        }
+
+        // --- Lógica ADMIN CMS ---
+        let cmsAdminModal, cmsEditModal;
+        document.addEventListener("DOMContentLoaded", () => {
+            cmsAdminModal = new bootstrap.Modal(document.getElementById('cmsAdminModal'));
+            cmsEditModal = new bootstrap.Modal(document.getElementById('cmsEditModal'));
+            loadCmsContent();
+        });
+
+        function openCmsAdminModal() {
+            renderAdminTable();
+            cmsAdminModal.show();
+        }
+
+        function renderAdminTable() {
+            const tbody = document.getElementById('cms-admin-table-body');
+            let html = '';
+            cmsData.forEach(c => {
+                html += `
+                    <tr>
+                        <td><span class="badge bg-secondary text-uppercase">${c.tipo}</span></td>
+                        <td class="fw-bold text-truncate" style="max-width: 250px;">${c.titulo}</td>
+                        <td>${new Date(c.fecha_publicacion).toLocaleDateString()}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="openCmsEditModal(${c.id})"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCms(${c.id})"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            if(cmsData.length === 0) html = '<tr><td colspan="4" class="text-center text-muted">No hay contenidos registrados.</td></tr>';
+            tbody.innerHTML = html;
+        }
+
+        function openCmsEditModal(id = null) {
+            document.getElementById('cms-form').reset();
+            document.getElementById('cms-id').value = '';
+            document.getElementById('cms-form-title').textContent = 'Crear Contenido';
+            toggleSurveyOptions();
+            
+            if(id) {
+                const c = cmsData.find(x => x.id === id);
+                if(c) {
+                    document.getElementById('cms-id').value = c.id;
+                    document.getElementById('cms-tipo').value = c.tipo;
+                    document.getElementById('cms-titulo').value = c.titulo;
+                    document.getElementById('cms-cuerpo').value = c.cuerpo || '';
+                    document.getElementById('cms-url_imagen').value = c.url_imagen || '';
+                    if(c.tipo === 'encuesta' && c.opciones) {
+                        document.getElementById('cms-opciones').value = c.opciones.join(', ');
+                    }
+                    document.getElementById('cms-form-title').textContent = 'Editar Contenido';
+                    toggleSurveyOptions();
+                }
+            }
+            cmsEditModal.show();
+        }
+
+        function toggleSurveyOptions() {
+            const tipo = document.getElementById('cms-tipo').value;
+            const grp = document.getElementById('survey-options-group');
+            grp.style.display = tipo === 'encuesta' ? 'block' : 'none';
+        }
+
+        async function saveCms() {
+            const id = document.getElementById('cms-id').value;
+            const tipo = document.getElementById('cms-tipo').value;
+            
+            let opciones = null;
+            if(tipo === 'encuesta') {
+                const optStr = document.getElementById('cms-opciones').value;
+                if(optStr.trim()) {
+                    opciones = optStr.split(',').map(o => o.trim()).filter(o => o.length > 0);
+                } else {
+                    return alert("Debes ingresar al menos dos opciones separadas por comas para la encuesta.");
+                }
+            }
+            const data = {
+                tipo: tipo,
+                titulo: document.getElementById('cms-titulo').value,
+                cuerpo: document.getElementById('cms-cuerpo').value,
+                url_imagen: document.getElementById('cms-url_imagen').value,
+                opciones: opciones
+            };
+            
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? '/api/cms/' + id : '/api/cms';
+            
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const resData = await res.json();
+                if(resData.success) {
+                    cmsEditModal.hide();
+                    await loadCmsContent();
+                    renderAdminTable();
+                } else {
+                    alert('Error: ' + resData.error);
+                }
+            } catch(e) {
+                alert('Error de red');
+            }
+        }
+
+        async function deleteCms(id) {
+            if(!confirm('¿Estás seguro de eliminar este contenido?')) return;
+            try {
+                const res = await fetch('/api/cms/' + id, { method: 'DELETE' });
+                const resData = await res.json();
+                if(resData.success) {
+                    await loadCmsContent();
+                    renderAdminTable();
+                } else {
+                    alert('Error al eliminar');
+                }
+            } catch(e) {
+                alert('Error de red');
+            }
+        }
     </script>
 <script>renderNavbar('dashboard');</script>
 </body>

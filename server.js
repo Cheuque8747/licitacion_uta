@@ -28,6 +28,8 @@ app.use('/api/perfil', require('./src/backend-core/routes/perfil.routes'));
 app.use('/api/ofertas', require('./src/backend-core/routes/ofertas.routes'));
 app.use('/api/postulaciones', require('./src/backend-core/routes/postulaciones.routes'));
 app.use('/api/chat', require('./src/backend-core/routes/chat.routes'));
+app.use('/api/cms', require('./src/backend-core/routes/cms.routes'));
+app.use('/api/analytics', require('./src/backend-core/routes/analytics.routes'));
 
 // Rutas de Vistas (Frontend)
 app.use('/', require('./src/backend-core/routes/view.routes'));
