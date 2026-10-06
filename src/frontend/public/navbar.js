@@ -101,7 +101,11 @@ function inicializarSocket(userId) {
         script.src = '/socket.io/socket.io.js';
         script.onload = () => {
             window.socket = io();
-            window.socket.emit('register', userId);
+            
+            // Esto asegura que si una VM se cae, al reconectarse a la nueva VM, el socket vuelva a presentarse
+            window.socket.on('connect', () => {
+                window.socket.emit('register', userId);
+            });
 
             window.socket.on('nuevo_mensaje', (msg) => {
                 // Si el chat está abierto y corresponde a esta postulación, lo pintamos
