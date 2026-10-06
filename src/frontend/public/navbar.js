@@ -1,6 +1,6 @@
 // Fetch Interceptor for JWT
 const originalFetch = window.fetch;
-window.fetch = async function() {
+window.fetch = async function () {
     let [resource, config] = arguments;
     if (typeof resource === 'string' && resource.startsWith('/api/') && !resource.startsWith('/api/auth/login') && !resource.startsWith('/api/auth/register')) {
         const token = localStorage.getItem('token');
@@ -16,36 +16,36 @@ window.fetch = async function() {
 async function renderNavbar(activePage = '') {
     const navContainer = document.createElement('div');
     document.body.insertBefore(navContainer, document.body.firstChild);
-    
+
     const userData = localStorage.getItem('user');
     if (!userData) return; // Si no hay usuario, no renderizamos o redirigimos
-    
+
     let user = null;
     try {
         user = JSON.parse(userData);
-    } catch(e) {
+    } catch (e) {
         return;
     }
 
     let linksHTML = '';
     if (user.rol === 'administrador' || user.rol === 'admin') {
         linksHTML = `
-            <li class="nav-item"><a class="nav-link ${activePage==='dashboard'?'active fw-bold':''}" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link ${activePage==='admin_users'?'active fw-bold':''}" href="/admin/users"><i class="bi bi-people me-1"></i>Gestión Usuarios</a></li>
-            <li class="nav-item"><a class="nav-link ${activePage==='admin_analytics'?'active fw-bold':''}" href="/admin/analytics"><i class="bi bi-bar-chart-fill me-1"></i>Analítica</a></li>
+            <li class="nav-item"><a class="nav-link ${activePage === 'dashboard' ? 'active fw-bold' : ''}" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link ${activePage === 'admin_users' ? 'active fw-bold' : ''}" href="/admin/users"><i class="bi bi-people me-1"></i>Gestión Usuarios</a></li>
+            <li class="nav-item"><a class="nav-link ${activePage === 'admin_analytics' ? 'active fw-bold' : ''}" href="/admin/analytics"><i class="bi bi-bar-chart-fill me-1"></i>Analítica</a></li>
         `;
     } else if (user.rol === 'reclutador') {
         linksHTML = `
-            <li class="nav-item"><a class="nav-link ${activePage==='dashboard'?'active fw-bold':''}" href="/dashboard"><i class="bi bi-house-door me-1"></i>Inicio</a></li>
-            <li class="nav-item"><a class="nav-link ${activePage==='vacantes'?'active fw-bold':''}" href="/vacantes"><i class="bi bi-briefcase me-1"></i>Mis Vacantes</a></li>
-            <li class="nav-item"><a class="nav-link ${activePage==='evaluar'?'active fw-bold':''}" href="/gestion-postulantes"><i class="bi bi-person-check me-1"></i>Evaluar Candidatos</a></li>
+            <li class="nav-item"><a class="nav-link ${activePage === 'dashboard' ? 'active fw-bold' : ''}" href="/dashboard"><i class="bi bi-house-door me-1"></i>Inicio</a></li>
+            <li class="nav-item"><a class="nav-link ${activePage === 'vacantes' ? 'active fw-bold' : ''}" href="/vacantes"><i class="bi bi-briefcase me-1"></i>Mis Vacantes</a></li>
+            <li class="nav-item"><a class="nav-link ${activePage === 'evaluar' ? 'active fw-bold' : ''}" href="/gestion-postulantes"><i class="bi bi-person-check me-1"></i>Evaluar Candidatos</a></li>
         `;
     } else if (user.rol === 'postulante') {
         linksHTML = `
-            <li class="nav-item"><a class="nav-link ${activePage==='dashboard'?'active fw-bold':''}" href="/dashboard"><i class="bi bi-house-door me-1"></i>Inicio</a></li>
-            <li class="nav-item"><a class="nav-link ${activePage==='vacantes'?'active fw-bold':''}" href="/vacantes"><i class="bi bi-search me-1"></i>Buscar Vacantes</a></li>
-            <li class="nav-item"><a class="nav-link ${activePage==='mis_postulaciones'?'active fw-bold':''}" href="/mis-postulaciones"><i class="bi bi-send-check me-1"></i>Mis Postulaciones</a></li>
-            <li class="nav-item"><a class="nav-link ${activePage==='perfil'?'active fw-bold':''}" href="/perfil"><i class="bi bi-person me-1"></i>Mi Perfil</a></li>
+            <li class="nav-item"><a class="nav-link ${activePage === 'dashboard' ? 'active fw-bold' : ''}" href="/dashboard"><i class="bi bi-house-door me-1"></i>Inicio</a></li>
+            <li class="nav-item"><a class="nav-link ${activePage === 'vacantes' ? 'active fw-bold' : ''}" href="/vacantes"><i class="bi bi-search me-1"></i>Buscar Vacantes</a></li>
+            <li class="nav-item"><a class="nav-link ${activePage === 'mis_postulaciones' ? 'active fw-bold' : ''}" href="/mis-postulaciones"><i class="bi bi-send-check me-1"></i>Mis Postulaciones</a></li>
+            <li class="nav-item"><a class="nav-link ${activePage === 'perfil' ? 'active fw-bold' : ''}" href="/perfil"><i class="bi bi-person me-1"></i>Mi Perfil</a></li>
         `;
     }
 
@@ -64,6 +64,7 @@ async function renderNavbar(activePage = '') {
                     ${linksHTML}
                 </ul>
                 <div class="d-flex align-items-center mt-2 mt-lg-0">
+                    <span id="server-badge" class="badge bg-info bg-opacity-75 me-3 d-none border" style="font-size: 0.7rem;" title="Servidor Actual">VM: ---</span>
                     <div class="me-3 dropdown" id="chat-notification-container">
                         <div class="position-relative" style="cursor:pointer;" data-bs-toggle="dropdown" aria-expanded="false" onclick="cargarDetalleNotificaciones()">
                             <i class="bi bi-bell-fill text-light fs-5"></i>
@@ -85,9 +86,9 @@ async function renderNavbar(activePage = '') {
     </nav>
     <div style="height: 70px;"></div> <!-- Spacer para fixed-top -->
     `;
-    
-    
-    if(user.rol === 'postulante' || user.rol === 'reclutador') {
+
+
+    if (user.rol === 'postulante' || user.rol === 'reclutador') {
         checkNotificaciones(); // Llama al inicio para ver si hay mensajes viejos
         inicializarSocket(user.id); // Reemplaza al polling
     }
@@ -101,10 +102,18 @@ function inicializarSocket(userId) {
         script.src = '/socket.io/socket.io.js';
         script.onload = () => {
             window.socket = io();
-            
+
             // Esto asegura que si una VM se cae, al reconectarse a la nueva VM, el socket vuelva a presentarse
             window.socket.on('connect', () => {
                 window.socket.emit('register', userId);
+            });
+
+            window.socket.on('server_info', (info) => {
+                const badge = document.getElementById('server-badge');
+                if (badge) {
+                    badge.textContent = `Servidor: ${info.hostname}`;
+                    badge.classList.remove('d-none');
+                }
             });
 
             window.socket.on('nuevo_mensaje', (msg) => {
@@ -128,16 +137,16 @@ async function checkNotificaciones() {
     try {
         const res = await fetch('/api/chat/notificaciones/noleidos');
         const data = await res.json();
-        if(data.success) {
+        if (data.success) {
             const badge = document.getElementById('chat-badge');
-            if(data.count > 0) {
+            if (data.count > 0) {
                 badge.textContent = data.count;
                 badge.classList.remove('d-none');
             } else {
                 badge.classList.add('d-none');
             }
         }
-    } catch(e) {
+    } catch (e) {
         console.error('Error fetching notifications');
     }
 }
@@ -147,7 +156,7 @@ async function cargarDetalleNotificaciones() {
         const res = await fetch('/api/chat/notificaciones/detalle');
         const data = await res.json();
         const drop = document.getElementById('notificaciones-dropdown');
-        
+
         if (data.success) {
             if (data.data.length === 0) {
                 drop.innerHTML = '<li><span class="dropdown-item text-center text-muted small">No hay mensajes nuevos</span></li>';
@@ -160,7 +169,7 @@ async function cargarDetalleNotificaciones() {
                         <a class="dropdown-item border-bottom py-2" href="#" onclick="abrirChatDesdeNotificacion(${m.postulacion_id}, ${m.oferta_id}); return false;">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <strong class="small text-primary">${m.remitente}</strong>
-                                <small class="text-muted" style="font-size:0.65rem;">${new Date(m.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                                <small class="text-muted" style="font-size:0.65rem;">${new Date(m.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
                             </div>
                             <div class="small text-truncate text-muted">${m.mensaje}</div>
                             <div class="small text-truncate" style="font-size:0.7rem; color:#6c757d;"><i class="bi bi-briefcase me-1"></i>${m.oferta_titulo}</div>
@@ -169,10 +178,10 @@ async function cargarDetalleNotificaciones() {
                 `;
             });
             html += '<li><hr class="dropdown-divider"></li>';
-            html += '<li><div class="d-flex justify-content-between px-3 pb-2 pt-1"><a class="btn btn-sm btn-outline-secondary w-100 me-1" href="#" onclick="limpiarNotificaciones(); return false;">Limpiar alertas</a><a class="btn btn-sm btn-primary w-100 ms-1" href="' + (JSON.parse(localStorage.getItem('user')).rol==='postulante'?'/mis-postulaciones':'/gestion-postulantes') + '">Ir al Panel</a></div></li>';
+            html += '<li><div class="d-flex justify-content-between px-3 pb-2 pt-1"><a class="btn btn-sm btn-outline-secondary w-100 me-1" href="#" onclick="limpiarNotificaciones(); return false;">Limpiar alertas</a><a class="btn btn-sm btn-primary w-100 ms-1" href="' + (JSON.parse(localStorage.getItem('user')).rol === 'postulante' ? '/mis-postulaciones' : '/gestion-postulantes') + '">Ir al Panel</a></div></li>';
             drop.innerHTML = html;
         }
-    } catch(e) {
+    } catch (e) {
         console.error(e);
     }
 }
@@ -216,7 +225,7 @@ function abrirChatDesdeNotificacion(postulacionId, ofertaId = null) {
         const link = user.rol === 'postulante' ? '/mis-postulaciones' : '/gestion-postulantes';
         window.location.href = link + '?openChat=' + postulacionId + (ofertaId ? '&ofertaId=' + ofertaId : '');
     }
-    
+
     // Refrescar notificaciones para apagar la campanita (porque al abrir el chat, el backend las marcará como leídas)
     setTimeout(checkNotificaciones, 1000);
 }

@@ -60,6 +60,9 @@ Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
 });
 
 io.on('connection', (socket) => {
+    // Le informamos al cliente en qué máquina está conectado (útil para debug y failover)
+    socket.emit('server_info', { hostname: require('os').hostname() });
+
     socket.on('register', (userId) => {
         // En lugar de usar Map en memoria, unimos al socket a una "sala" con su ID
         socket.join(`user_${userId}`);
