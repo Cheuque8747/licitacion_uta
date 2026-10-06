@@ -36,30 +36,37 @@ app.use('/', require('./src/backend-core/routes/view.routes'));
 
 const http = require('http');
 const { Server } = require('socket.io');
+const { createClient } = require('redis');
+const { createAdapter } = require('@socket.io/redis-adapter');
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
-// Mapeo de usuarios conectados: userId -> socketId
-const connectedUsers = new Map();
+// Configuración de Redis para Socket.io
+const redisHost = process.env.REDIS_HOST || '127.0.0.1';
+const redisPort = process.env.REDIS_PORT || 6379;
+const redisPass = process.env.REDIS_PASSWORD || '';
+
+const redisUrl = redisPass ? `redis://:${redisPass}@${redisHost}:${redisPort}` : `redis://${redisHost}:${redisPort}`;
+
+const pubClient = createClient({ url: redisUrl });
+const subClient = pubClient.duplicate();
+
+Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
+    io.adapter(createAdapter(pubClient, subClient));
+    console.log('Redis Adapter conectado a Socket.io');
+}).catch(err => {
+    console.error('Error conectando Redis Adapter:', err);
+});
 
 io.on('connection', (socket) => {
     socket.on('register', (userId) => {
-        connectedUsers.set(userId, socket.id);
-    });
-
-    socket.on('disconnect', () => {
-        for (const [userId, sockId] of connectedUsers.entries()) {
-            if (sockId === socket.id) {
-                connectedUsers.delete(userId);
-                break;
-            }
-        }
+        // En lugar de usar Map en memoria, unimos al socket a una "sala" con su ID
+        socket.join(`user_${userId}`);
     });
 });
 
 app.set('io', io);
-app.set('connectedUsers', connectedUsers);
 
 server.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);

@@ -58,16 +58,15 @@ exports.enviarMensaje = async (req, res) => {
             const rel = relResult.rows[0];
             const recipientId = (emisor_id === rel.postulante_id) ? rel.reclutador_id : rel.postulante_id;
             
-            // Emitir evento si el usuario está conectado
+            // Emitir evento usando Redis Adapter (Rooms)
             const io = req.app.get('io');
-            const connectedUsers = req.app.get('connectedUsers');
-            if (io && connectedUsers && connectedUsers.has(recipientId)) {
-                const recipientSocketId = connectedUsers.get(recipientId);
+            if (io) {
                 const msgData = {
                     ...result.rows[0],
                     nombre_completo: rel.nombre_completo
                 };
-                io.to(recipientSocketId).emit('nuevo_mensaje', msgData);
+                // Emitimos a la sala privada del usuario destino (funciona en cualquier VM)
+                io.to(`user_${recipientId}`).emit('nuevo_mensaje', msgData);
             }
         }
 
