@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcrypt');
 const db = require('./src/backend-core/config/db');
 
 async function resetDatabase() {
@@ -21,10 +22,11 @@ async function resetDatabase() {
         
         // 4. Insertar un Administrador por defecto para que puedas iniciar sesión
         console.log('👤 Creando usuario Administrador por defecto...');
+        const adminHash = await bcrypt.hash('admin123', 10);
         await db.query(`
             INSERT INTO usuarios (rut, nombre_completo, email, password_hash, rol, verificado)
-            VALUES ('11111111-1', 'Súper Administrador', 'admin@uta.cl', 'admin123', 'administrador', TRUE);
-        `);
+            VALUES ('11111111-1', 'Súper Administrador', 'admin@uta.cl', $1, 'administrador', TRUE);
+        `, [adminHash]);
 
         // 5. Crear datos de prueba (MOCK DATA)
         console.log('🏗️ Insertando datos de prueba ricos y variados (Empresas, Reclutadores, Postulantes, Ofertas)...');
@@ -76,11 +78,12 @@ async function resetDatabase() {
             ]
         };
 
+        const defaultHash = await bcrypt.hash('123456', 10);
         for (let r of reclutadoresData) {
             // Crear usuario
             const resUser = await db.query(
-                `INSERT INTO usuarios (rut, nombre_completo, email, password_hash, rol, verificado) VALUES ($1, $2, $3, '123456', 'reclutador', TRUE) RETURNING id`,
-                [r.rut, r.nombre, r.email]
+                `INSERT INTO usuarios (rut, nombre_completo, email, password_hash, rol, verificado) VALUES ($1, $2, $3, $4, 'reclutador', TRUE) RETURNING id`,
+                [r.rut, r.nombre, r.email, defaultHash]
             );
             const rId = resUser.rows[0].id;
 
@@ -128,8 +131,8 @@ async function resetDatabase() {
 
         for (let p of postulantesData) {
             const resUser = await db.query(
-                `INSERT INTO usuarios (rut, nombre_completo, email, password_hash, rol, verificado) VALUES ($1, $2, $3, '123456', 'postulante', TRUE) RETURNING id`,
-                [p.rut, p.nombre, p.email]
+                `INSERT INTO usuarios (rut, nombre_completo, email, password_hash, rol, verificado) VALUES ($1, $2, $3, $4, 'postulante', TRUE) RETURNING id`,
+                [p.rut, p.nombre, p.email, defaultHash]
             );
             await db.query(
                 `INSERT INTO perfil_postulantes (usuario_id, carrera, facultad, cohorte, resumen, experiencia, habilidades, expectativa_renta) 
