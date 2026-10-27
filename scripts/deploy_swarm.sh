@@ -26,11 +26,13 @@ if ! docker info | grep -q "Swarm: active"; then
     docker swarm join-token worker | grep "docker swarm join"
 fi
 
-# 2. Verificar si el servicio de Docker Registry local está corriendo
-if ! docker service ls | grep -q "registry"; then
+# 2. Verificar si el contenedor de Docker Registry local está corriendo
+if ! docker ps | grep -q "registry"; then
     echo "[INFO] Levantando Registro Local de Imagenes en el puerto ${REGISTRY_PORT}..."
-    docker service create --name registry --publish published="${REGISTRY_PORT}",target=5000 registry:2.8.3
-    sleep 3
+    docker service rm registry 2>/dev/null || true
+    docker rm -f registry 2>/dev/null || true
+    docker run -d --name registry --restart=always -p "${REGISTRY_PORT}:5000" registry:2.8.3
+    sleep 2
 fi
 
 # 3. Compilar las imágenes locales
