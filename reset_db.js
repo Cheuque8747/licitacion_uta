@@ -4,24 +4,24 @@ const bcrypt = require('bcrypt');
 const db = require('./src/backend-core/config/db');
 
 async function resetDatabase() {
-    console.log('🔄 Iniciando reseteo de la base de datos...');
+    console.log('[RESET] Iniciando reseteo de la base de datos...');
     
     try {
         // 1. Borrar todas las tablas actuales (Precaución: esto borra TODOS los datos)
-        console.log('🗑️ Borrando esquema actual...');
+        console.log('[DELETE] Borrando esquema actual...');
         await db.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
         
         // 2. Leer el archivo SQL
-        console.log('📖 Leyendo script_creacion.sql...');
+        console.log('[SQL] Leyendo script_creacion.sql...');
         const sqlPath = path.join(__dirname, 'database', 'script_creacion.sql');
         const sqlScript = fs.readFileSync(sqlPath, 'utf8');
         
         // 3. Ejecutar el script SQL
-        console.log('⚙️ Ejecutando script de creación (creando tablas y tipos)...');
+        console.log('[SQL] Ejecutando script de creacion (creando tablas y tipos)...');
         await db.query(sqlScript);
         
         // 4. Insertar un Administrador por defecto para que puedas iniciar sesión
-        console.log('👤 Creando usuario Administrador por defecto...');
+        console.log('[ADMIN] Creando usuario Administrador por defecto...');
         const adminHash = await bcrypt.hash('admin123', 10);
         await db.query(`
             INSERT INTO usuarios (rut, nombre_completo, email, password_hash, rol, verificado)
@@ -29,7 +29,7 @@ async function resetDatabase() {
         `, [adminHash]);
 
         // 5. Crear datos de prueba (MOCK DATA)
-        console.log('🏗️ Insertando datos de prueba ricos y variados (Empresas, Reclutadores, Postulantes, Ofertas)...');
+        console.log('[MOCK] Insertando datos de prueba ricos y variados (Empresas, Reclutadores, Postulantes, Ofertas)...');
         
         // Empresas
         await db.query(`
@@ -141,7 +141,7 @@ async function resetDatabase() {
             );
         }
 
-        console.log('✅ ¡Base de datos recreada exitosamente con datos de prueba!');
+        console.log('[OK] Base de datos recreada exitosamente con datos de prueba.');
         console.log('--------------------------------------------------');
         console.log('Ahora puedes iniciar sesión con:');
         console.log('Admin: admin@uta.cl / admin123');
@@ -150,7 +150,7 @@ async function resetDatabase() {
         console.log('--------------------------------------------------');
 
     } catch (error) {
-        console.error('❌ Error al resetear la base de datos:', error);
+        console.error('[ERROR] Error al resetear la base de datos:', error);
     } finally {
         process.exit();
     }

@@ -1,12 +1,43 @@
 const db = require('../config/db');
-const { calcularMatch } = require('../../ia-module/recomendador');
+let calcularMatchLocal = null;
+try {
+    calcularMatchLocal = require('../../ia-module/recomendador').calcularMatch;
+} catch (e) {
+    // Modo microservicio puro sin código local de IA
+}
 
 exports.analizarMatchIA = async (req, res) => {
     try {
         const { cv, oferta } = req.body;
-        
-        // Llamar a la lógica de IA aislada
-        const jsonMatch = await calcularMatch(cv, oferta);
+        const iaServiceUrl = process.env.IA_SERVICE_URL || 'http://ia-service:5000';
+
+        let jsonMatch = null;
+
+        // Intentar llamar al Microservicio de IA desacoplado
+        try {
+            const response = await fetch(`${iaServiceUrl}/api/ia/match`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cv, oferta })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    jsonMatch = { score: data.match_score, feedback: data.feedback };
+                }
+            }
+        } catch (fetchErr) {
+            console.warn(`[Microservicio IA no disponible en ${iaServiceUrl}, intentando fallback local...]`);
+        }
+
+        // Si el microservicio HTTP no respondió, usar función local como respaldo
+        if (!jsonMatch && calcularMatchLocal) {
+            jsonMatch = await calcularMatchLocal(cv, oferta);
+        }
+
+        if (!jsonMatch) {
+            throw new Error('No se pudo obtener respuesta del servicio de IA');
+        }
 
         res.json({ success: true, match_score: jsonMatch.score, feedback: jsonMatch.feedback });
     } catch (error) {
