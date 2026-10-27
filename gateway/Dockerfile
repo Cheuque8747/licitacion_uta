@@ -10,6 +10,6 @@ COPY nginx.conf /etc/nginx/nginx.conf
 EXPOSE 80 5432
 
 HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -qO- http://127.0.0.1/ || exit 1
+  CMD wget -qO- http://127.0.0.1/healthz || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
