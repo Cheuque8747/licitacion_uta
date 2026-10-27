@@ -101,7 +101,10 @@ function inicializarSocket(userId) {
         script.id = 'socketio-script';
         script.src = '/socket.io/socket.io.js';
         script.onload = () => {
-            window.socket = io();
+            window.socket = io({
+                transports: ['websocket'],
+                upgrade: false
+            });
 
             // Esto asegura que si una VM se cae, al reconectarse a la nueva VM, el socket vuelva a presentarse
             window.socket.on('connect', () => {
