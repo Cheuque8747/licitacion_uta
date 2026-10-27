@@ -39,7 +39,7 @@ services:
         constraints:
           - node.role == manager # Corre en VM1
       restart_policy:
-        condition: on-failure
+        condition: any
         delay: 5s
 
   # ============================================================================
@@ -55,7 +55,7 @@ services:
         constraints:
           - node.labels.app == app # Exclusivo para VM2 y VM3 (Nodos de aplicacion)
       restart_policy:
-        condition: on-failure
+        condition: any
         delay: 5s
 
   # ============================================================================
@@ -83,7 +83,7 @@ services:
         constraints:
           - node.labels.app == app # Exclusivo para VM2 y VM3 (Nodos de aplicacion)
       restart_policy:
-        condition: on-failure
+        condition: any
         delay: 5s
 
   # ============================================================================
@@ -102,7 +102,7 @@ services:
         constraints:
           - node.labels.app == app # Exclusivo para VM2 y VM3 (Nodos de aplicacion)
       restart_policy:
-        condition: on-failure
+        condition: any
         delay: 5s
 
   # ============================================================================
@@ -121,7 +121,7 @@ services:
         constraints:
           - node.role == manager # Anclado a VM1
       restart_policy:
-        condition: on-failure
+        condition: any
 
   # ============================================================================
   # 6. CAPA DE PERSISTENCIA: POSTGRESQL MASTER (Anclado a VM4)
@@ -142,7 +142,7 @@ services:
         constraints:
           - node.labels.app == db # Garantiza ejecución exclusiva en VM4
       restart_policy:
-        condition: on-failure
+        condition: any
 
   # ============================================================================
   # 7. OBSERVABILIDAD Y MONITOREO: PORTAINER (Anclado a VM1)
@@ -164,4 +164,4 @@ services:
         constraints:
           - node.role == manager # Anclado a VM1
       restart_policy:
-        condition: on-failure
+        condition: any
