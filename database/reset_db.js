@@ -1,9 +1,17 @@
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
-const db = fs.existsSync(path.join(__dirname, '../src/backend-core/config/db.js')) 
-    ? require('../src/backend-core/config/db') 
-    : require('./src/backend-core/config/db');
+const { Pool } = require('pg');
+require('dotenv').config();
+
+const db = new Pool({
+  user: process.env.DB_USER || 'admin_proyecto',
+  host: process.env.DB_HOST || 'postgres-db',
+  database: process.env.DB_NAME || 'db_licitacion',
+  password: process.env.DB_PASSWORD || '12345',
+  port: parseInt(process.env.DB_PORT || '5432'),
+  connectionTimeoutMillis: 10000
+});
 
 async function resetDatabase() {
     console.log('[RESET] Iniciando reseteo de la base de datos...');
@@ -156,6 +164,7 @@ async function resetDatabase() {
     } catch (error) {
         console.error('[ERROR] Error al resetear la base de datos:', error);
     } finally {
+        await db.end();
         process.exit();
     }
 }

@@ -8,7 +8,7 @@ const primaryPool = new Pool({
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
-  connectionTimeoutMillis: 2000 // Da error rápido si la VM4 cae
+  connectionTimeoutMillis: 5000 // Tiempo prudente de tolerancia para entornos virtualizados
 });
 
 // Configuración de la base de datos de respaldo (VM5)
@@ -18,7 +18,7 @@ const replicaPool = new Pool({
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
-  connectionTimeoutMillis: 2000
+  connectionTimeoutMillis: 5000
 });
 
 // Control de estado de emergencia
