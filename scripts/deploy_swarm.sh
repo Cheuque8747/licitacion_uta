@@ -54,6 +54,12 @@ docker push "${REGISTRY}/licitacion-uta-ia-service:1.0.0"
 # 5. Desplegar el Stack en el Clúster
 echo "[DEPLOY] Desplegando el stack '${STACK_NAME}' en el cluster Swarm..."
 export REGISTRY="${REGISTRY}"
+if [ -f .env ]; then
+    echo "[INFO] Cargando variables seguras desde archivo .env local..."
+    set -a
+    source .env
+    set +a
+fi
 docker stack deploy -c docker-compose.swarm.yml "${STACK_NAME}"
 
 echo "=================================================="
