@@ -20,10 +20,10 @@ echo "=================================================="
 # 1. Verificar si este nodo es Swarm Manager
 if ! docker info | grep -q "Swarm: active"; then
     echo "[WARN] El nodo no tiene Swarm inicializado. Inicializando Swarm Manager..."
-    docker swarm init --advertise-addr "${REGISTRY_IP}"
+    docker swarm init --advertise-addr "${REGISTRY_IP}" --data-path-addr "${REGISTRY_IP}"
     echo "[OK] Swarm inicializado en ${REGISTRY_IP}."
-    echo "[INFO] Para unir los workers (VM2, VM3, VM4, VM5), ejecuta en cada una:"
-    docker swarm join-token worker | grep "docker swarm join"
+    echo "[INFO] Para unir los workers (VM2, VM3, VM4, VM5), ejecuta en cada una con su IP interna (10.0.0.X):"
+    echo "   docker swarm join --token <TOKEN> --advertise-addr 10.0.0.X --data-path-addr 10.0.0.X ${REGISTRY_IP}:2377"
 fi
 
 # 2. Verificar si el contenedor de Docker Registry local está corriendo
