@@ -7,13 +7,20 @@ services:
     container_name: licitacion_gateway
     ports:
       - "${GATEWAY_PORT:-80}:80"
+    extra_hosts:
+      - "frontend:${APP_HOST:-frontend}"
+      - "backend-core:${APP_HOST:-backend-core}"
+      - "ia-service:${APP_HOST:-ia-service}"
     depends_on:
       frontend:
         condition: service_healthy
+        required: false
       backend-core:
         condition: service_healthy
+        required: false
       ia-service:
         condition: service_healthy
+        required: false
     networks:
       - licitacion_net
     profiles:
@@ -27,8 +34,8 @@ services:
       context: ./src/frontend
       dockerfile: Dockerfile
     container_name: licitacion_frontend
-    expose:
-      - "80"
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
     networks:
       - licitacion_net
     profiles:
@@ -53,14 +60,16 @@ services:
       - REDIS_HOST=${DOCKER_REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-      - IA_SERVICE_URL=http://ia-service:5001
+      - IA_SERVICE_URL=http://${IA_HOST:-ia-service}:5001
     depends_on:
       postgres-db:
         condition: service_healthy
+        required: false
       redis:
         condition: service_healthy
-    expose:
-      - "3000"
+        required: false
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
     networks:
       - licitacion_net
     profiles:
@@ -77,8 +86,8 @@ services:
     environment:
       - PORT=5001
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-    expose:
-      - "5001"
+    ports:
+      - "${IA_PORT:-5001}:5001"
     networks:
       - licitacion_net
     profiles:
@@ -110,6 +119,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
     networks:
       - licitacion_net
     profiles:
@@ -129,7 +140,7 @@ services:
       - pg_data:/var/lib/postgresql
       - ./database:/docker-entrypoint-initdb.d:ro
     ports:
-      - "${GATEWAY_DB_PORT:-5433}:5432"
+      - "${GATEWAY_DB_PORT:-5432}:5432"
     expose:
       - "5432"
     healthcheck:
