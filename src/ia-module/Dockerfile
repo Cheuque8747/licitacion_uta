@@ -1,5 +1,9 @@
 FROM node:20-alpine
 
+LABEL maintainer="Victor Cheuque Garcia <victor@uta.cl>"
+LABEL description="Microservicio de Evaluacion Semantica Laboral con Google Gemini"
+LABEL version="2.0.0"
+
 WORKDIR /app
 
 COPY --chown=node:node package*.json ./

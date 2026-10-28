@@ -1,4 +1,8 @@
-FROM nginx:alpine
+FROM nginx:1.27-alpine
+
+LABEL maintainer="Victor Cheuque Garcia <victor@uta.cl>"
+LABEL description="Frontend Web Nginx para Sistema de Licitaciones UTA"
+LABEL version="2.0.0"
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY public /usr/share/nginx/html/public

@@ -5,3 +5,7 @@ node_modules/
 *.doc
 *.zip
 .DS_Store
+backups/*.sql.gz
+backups/*.sql
+backups/*.log
+!backups/.gitkeep
