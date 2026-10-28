@@ -5,6 +5,8 @@ services:
       context: ./gateway
       dockerfile: Dockerfile
     container_name: licitacion_gateway
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "${GATEWAY_PORT:-80}:80"
     extra_hosts:
