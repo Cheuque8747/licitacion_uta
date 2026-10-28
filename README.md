@@ -1,157 +1,134 @@
-# Sistema de Licitaciones UTA
+# Sistema de Licitaciones UTA - Unidad 2
 
-Este es el repositorio del Sistema de Licitaciones UTA, una plataforma que conecta ofertas laborales y de prácticas con postulantes. El sistema facilita el reclutamiento y la selección con herramientas modernas como chat en tiempo real y análisis mediante inteligencia artificial.
+Repositorio del Sistema de Licitaciones UTA, correspondiente a la Licitacion Mercado Publico 726931-1-LE26. Plataforma de intermediacion laboral que conecta ofertas y vacantes con estudiantes y titulados de la Universidad de Tarapaca, integrando evaluacion de compatibilidad semantica mediante Google Gemini y comunicacion en tiempo real por WebSockets.
 
-## 🚀 Funcionalidades del Sistema
+---
 
-El sistema ofrece varias funcionalidades organizadas en módulos que cubren todo el proceso de reclutamiento:
+## Arquitectura de Microservicios (Opcion 1 - Docker Compose)
 
-1. **Sistema de Autenticación y Seguridad (Auth)**: Controla el acceso a la plataforma usando tokens de seguridad (JWT) y encripta las contraseñas con bcrypt.
+El sistema esta modularizado en 7 contenedores organizados mediante Docker Compose:
 
-2. **Gestión de Perfiles**: Define perfiles distintos para reclutadores (empresas) y postulantes (estudiantes o profesionales), con datos como habilidades, experiencia y expectativas salariales.
+1. **gateway** (`nginx:alpine`): Proxy inverso perimetral que centraliza el trafico y enruta peticiones hacia `/`, `/api/`, `/api/ia/` y `/socket.io/`.
+2. **frontend** (`nginx:alpine`): Servidor estatico para la interfaz web, hojas de estilo CSS, scripts y vistas HTML.
+3. **backend-core** (`node:20-alpine`): API REST transaccional (autenticacion JWT, gestion de postulaciones, ATS y chat Socket.IO).
+4. **ia-service** (`node:20-alpine`): Microservicio REST enfocado en analisis de compatibilidad de perfil usando Google Gemini.
+5. **redis** (`redis:7-alpine`): Broker en memoria y adaptador Pub/Sub para Socket.IO.
+6. **postgres-db** (`postgres:18-alpine`): Motor de base de datos relacional con volumen persistente (`pg_data`) y auto-inicializacion (`01_script_creacion.sql` y `02_datos_iniciales.sql`).
+7. **portainer** (`portainer/portainer-ce`): Panel grafico de observabilidad y monitoreo en el puerto 9000.
 
-3. **Gestión de Ofertas y Postulaciones**:
+---
 
-- Creación, edición y publicación de ofertas de empleo y prácticas.
+## Estructura del Repositorio
 
-- Búsqueda avanzada de ofertas y sistema de postulación directa.
-
-4. **Chat en Tiempo Real**: Permite comunicación instantánea entre reclutadores y postulantes, utilizando Socket.io para mantener la conexión activa.
-
-5. **Módulo de Analíticas y Dashboard**: Ofrece una vista clara de métricas clave como cantidad de postulaciones, ofertas activas y estadísticas de interacción.
-
-6. **Sistema CMS (Content Management System)**: Facilita la gestión del contenido de la plataforma, como páginas estáticas y noticias.
-
-7. **Integración con Inteligencia Artificial (Módulo IA)**: Usa la API de Google Gemini para analizar datos y brindar asistencia inteligente, como sugerencias de candidatos o recomendaciones de ofertas.
-
-## 👥 Roles del Sistema
-
-El sistema opera con tres tipos de usuarios, cada uno con funciones específicas:
-
-1. **Administrador (`administrador`)**:
-
-- Tiene control total sobre la plataforma.
-
-- Gestiona usuarios, configuraciones generales y monitorea el sistema.
-
-2. **Reclutador / Empresa (`reclutador`)**:
-
-- Representa a una empresa.
-
-- Crea ofertas de trabajo, prácticas o pasantías.
-
-- Revisa perfiles de postulantes y se comunica con ellos por chat.
-
-3. **Postulante (`postulante`)**:
-
-- Busca oportunidades laborales o de prácticas.
-
-- Llena su perfil profesional con datos como carrera, habilidades y experiencia.
-
-- Puede postular a ofertas y chatear con reclutadores.
-
-## ⚙️ Configuración del Entorno (`.env`)
-
-Para que el sistema funcione, debes crear un archivo `.env` en la raíz del proyecto con las siguientes variables:
-
-```env
-
-# Configuración de Base de Datos (PostgreSQL)
-
-DB_USER=admin_proyecto
-
-DB_HOST=localhost
-
-DB_NAME=db_licitacion
-
-DB_PASSWORD=tu_contraseña_db
-
-DB_PORT=5432
-
-# Configuración del Servidor Node.js
-
-PORT=3000
-
-# Seguridad
-
-JWT_SECRET=super_secret_jwt_key_uta_2024
-
-# Integración con IA
-
-GEMINI_API_KEY=tu_api_key_de_google_gemini
-
-# Configuración de Redis (Requerido para el chat en entornos escalados)
-
-REDIS_HOST=127.0.0.1
-
-REDIS_PORT=6379
-
-REDIS_PASSWORD=tu_contrasena_redis_si_aplica
-
+```text
+licitacion_uta/
+├── docker-compose.yml
+├── .env.example
+├── README.md
+├── gateway/
+│   ├── Dockerfile
+│   └── nginx.conf
+├── database/
+│   ├── 01_script_creacion.sql
+│   └── 02_datos_iniciales.sql
+├── src/
+│   ├── frontend/
+│   │   ├── Dockerfile
+│   │   ├── nginx.conf
+│   │   ├── public/
+│   │   └── views/
+│   ├── backend-core/
+│   │   ├── Dockerfile
+│   │   ├── package.json
+│   │   ├── server.js
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── middlewares/
+│   │   └── routes/
+│   └── ia-module/
+│       ├── Dockerfile
+│       ├── package.json
+│       ├── server.js
+│       └── recomendador.js
 ```
 
-## 🖥️ Despliegue: Local vs Producción (Máquinas Virtuales)
+---
 
-El sistema puede ejecutarse tanto en entornos locales como en producción.
+## Configuracion del Entorno (.env)
 
-### 1. Despliegue Local (Desarrollo)
-
-Para trabajar en tu máquina, sigue estos pasos:
-
-1. **Instalar dependencias**:
+Copia la plantilla `.env.example` hacia `.env` y configura tus valores:
 
 ```bash
-
-npm install
-
+cp .env.example .env
 ```
 
-2. **Configurar el entorno**: Crea el archivo `.env` con tus datos de base de datos local y Redis.
+Variables principales:
+- `COMPOSE_PROFILES`: `all` para local; `gateway,redis,monitoring` para VM1; `app` para VM2/VM3; `db` para VM4.
+- `DB_USER`, `DB_PASSWORD`, `DB_NAME`: Credenciales de PostgreSQL.
+- `DOCKER_DB_HOST`: Nombre DNS en Docker (`postgres-db`) o IP privada en VMs (`10.0.0.11` / `10.0.0.4`).
+- `DOCKER_REDIS_HOST`: Nombre DNS (`redis`) o IP privada (`10.0.0.1`).
+- `GATEWAY_PORT`: Puerto expuesto en el host (por defecto 8888 o 80).
+- `GEMINI_API_KEY`: Clave de API de Google Gemini (obligatoria para el microservicio de IA).
+- `JWT_SECRET`: Llave secreta para emision y validacion de tokens.
 
-3. **Poblar la base de datos**: Usa el script para llenar la base con datos de prueba.
+---
+
+## Ejecucion Local (Todos los servicios)
+
+Para construir y levantar los 7 contenedores en tu estacion de trabajo:
 
 ```bash
-
-node reset_db.js
-
+docker compose up -d --build
 ```
 
-4. **Iniciar el servidor**:
+Verificar estado de los contenedores:
 
 ```bash
-
-npm run dev
-
-# o
-
-npm start
-
+docker compose ps
 ```
 
-La aplicación estará disponible en `http://localhost:3000`.
-
-### 2. Despliegue en Máquinas / Servidores (Producción)
-
-En producción, el sistema está diseñado para escalar y mantener alta disponibilidad.
-
-- **Proxy Inverso / Load Balancer (Nginx)**:
-
-La aplicación corre en el puerto 3000, pero no es accesible directamente desde internet. Nginx actúa como proxy inverso, balanceando la carga y manejando HTTP.
-
-- **Gestión de Procesos (PM2)**:
-
-En entornos de producción, se utiliza PM2 para ejecutar el servidor. Esto asegura que el proceso se mantenga activo, se reinicie tras fallos y se ejecute en modo cluster si es necesario.
+Visualizar logs en tiempo real:
 
 ```bash
-
-pm2 start server.js
-
+docker compose logs -f
 ```
 
-- **Redis para Escalabilidad de Socket.io**:
+Detener los servicios:
 
-En entornos con múltiples servidores, se usa Redis como adaptador para Socket.io. Esto permite que los mensajes en tiempo real lleguen sin problemas, aunque los usuarios se conecten a diferentes máquinas.
+```bash
+docker compose down
+```
 
-- **Base de Datos Dedicada**:
+---
 
-PostgreSQL no debe correr en la misma máquina que la aplicación. Debe estar en un servidor aparte, accesible mediante una IP interna, para mejorar rendimiento, seguridad y facilidad de mantenimiento.
+## Despliegue en Maquinas Virtuales mediante Perfiles
+
+Cada maquina virtual levanta unicamente los servicios correspondientes utilizando la bandera `--profile`:
+
+### VM1: Servidor Perimetral (Gateway, Redis y Monitoreo Portainer)
+```bash
+docker compose --profile gateway --profile redis --profile monitoring up -d
+```
+
+### VM2 y VM3: Servidores de Aplicacion (Frontend, Backend Core e IA Service)
+```bash
+docker compose --profile app up -d
+```
+
+### VM4: Servidor de Persistencia (Base de Datos PostgreSQL 18)
+```bash
+docker compose --profile db up -d
+```
+
+### VM5: Servidor de Contingencia y Replica
+Mantiene la replica pasiva de base de datos para alta disponibilidad y conmutacion.
+
+---
+
+## Credenciales Iniciales de Prueba
+
+El contenedor de base de datos se auto-inicializa con los siguientes usuarios predeterminados:
+
+- **Administrador**: `admin@uta.cl` / Contrasena: `admin123`
+- **Reclutador**: `csilva@codelco.cl` / Contrasena: `123456`
+- **Postulante**: `pedro@alumnos.uta.cl` / Contrasena: `123456`

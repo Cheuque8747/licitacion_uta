@@ -20,13 +20,13 @@ CREATE TABLE perfil_postulantes (
     facultad VARCHAR(100),
     cohorte INTEGER,
     expectativa_renta INTEGER,
-    resumen TEXT, -- Resumen profesional
-    experiencia TEXT, -- Experiencia Laboral
-    habilidades TEXT, -- Habilidades clave
-    cv_url VARCHAR(255) -- Documento CV adjunto (opcional)
+    resumen TEXT,
+    experiencia TEXT,
+    habilidades TEXT,
+    cv_url VARCHAR(255)
 );
 
--- Entidad Empresa (Creada por el Administrador)
+-- Entidad Empresa
 CREATE TABLE empresas (
     id SERIAL PRIMARY KEY,
     nombre_empresa VARCHAR(150) NOT NULL,
@@ -36,21 +36,21 @@ CREATE TABLE empresas (
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Perfil de Reclutadores (Usuarios asociados a una Empresa)
+-- Perfil de Reclutadores
 CREATE TABLE perfil_reclutadores (
     usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
     empresa_id INTEGER REFERENCES empresas(id) ON DELETE CASCADE,
     cargo VARCHAR(100)
 );
 
--- Ofertas Laborales (Empleos, Prácticas, Pasantías)
+-- Tipos para Ofertas Laborales
 CREATE TYPE tipo_oferta AS ENUM ('empleo', 'practica', 'pasantia');
 CREATE TYPE estado_oferta AS ENUM ('borrador', 'pendiente', 'publicada', 'cerrada');
 
 CREATE TABLE ofertas_laborales (
     id SERIAL PRIMARY KEY,
     empresa_id INTEGER REFERENCES empresas(id) ON DELETE CASCADE,
-    reclutador_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL, -- El reclutador que la creó
+    reclutador_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
     titulo VARCHAR(200) NOT NULL,
     descripcion TEXT NOT NULL,
     experiencia_solicitada TEXT,
@@ -58,26 +58,26 @@ CREATE TABLE ofertas_laborales (
     tipo tipo_oferta NOT NULL,
     estado estado_oferta DEFAULT 'pendiente',
     facultad_requerida VARCHAR(100),
-    carrera_requerida TEXT[], -- Puede estar orientada a múltiples carreras
+    carrera_requerida TEXT[],
     fecha_publicacion TIMESTAMP,
     fecha_cierre TIMESTAMP,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Postulaciones (Relación entre Postulantes y Ofertas)
+-- Postulaciones
 CREATE TABLE postulaciones (
     id SERIAL PRIMARY KEY,
     oferta_id INTEGER REFERENCES ofertas_laborales(id) ON DELETE CASCADE,
     postulante_id INTEGER REFERENCES perfil_postulantes(usuario_id) ON DELETE CASCADE,
-    estado_avance VARCHAR(50) DEFAULT 'enviada', -- ej: enviada, en revisión, entrevistado, contratado, rechazado
-    match_score DECIMAL(5,2), -- % de match calculado por la IA
-    feedback_ia TEXT, -- Retroalimentación de brechas (IA)
-    cv_enviado JSONB, -- Snapshot del CV al momento de enviar
+    estado_avance VARCHAR(50) DEFAULT 'enviada',
+    match_score DECIMAL(5,2),
+    feedback_ia TEXT,
+    cv_enviado JSONB,
     fecha_postulacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(oferta_id, postulante_id)
 );
 
--- Gestión de Contenidos (CMS: Noticias, Eventos, Banners)
+-- Gestion de Contenidos (CMS)
 CREATE TYPE tipo_contenido AS ENUM ('noticia', 'evento', 'banner', 'encuesta');
 
 CREATE TABLE contenidos_cms (
@@ -101,7 +101,7 @@ CREATE TABLE encuestas_votos (
     UNIQUE(contenido_id, usuario_id)
 );
 
--- Mensajes de Chat entre Postulante y Reclutador
+-- Mensajes de Chat
 CREATE TABLE mensajes_chat (
     id SERIAL PRIMARY KEY,
     postulacion_id INTEGER REFERENCES postulaciones(id) ON DELETE CASCADE,
@@ -110,3 +110,8 @@ CREATE TABLE mensajes_chat (
     leido BOOLEAN DEFAULT FALSE,
     fecha_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Insercion de Administrador por defecto (admin@uta.cl / admin123)
+INSERT INTO usuarios (rut, nombre_completo, email, password_hash, rol, verificado)
+VALUES ('11111111-1', 'Super Administrador', 'admin@uta.cl', '$2b$10$1p/JiM17XPPnA.aTUTRCZ.vwaTEePEzaTO4Ti11PrFUCBxMSn5gcW', 'administrador', TRUE)
+ON CONFLICT (email) DO NOTHING;

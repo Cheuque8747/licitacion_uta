@@ -44,7 +44,7 @@ exports.register = async (req, res) => {
     } catch (error) {
         // Error de solo lectura de la VM5
         if (error.code === '25006') {
-            console.warn('⚠️ Intento de registro bloqueado: BD en Modo Solo Lectura (VM5)');
+            console.warn('[AUTH] Intento de registro bloqueado: BD en Modo Solo Lectura (VM5)');
             return res.status(503).json({
                 success: false,
                 error: 'El sistema se encuentra en modo mantenimiento (solo lectura). No es posible crear cuentas en este momento.'

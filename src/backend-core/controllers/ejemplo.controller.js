@@ -20,9 +20,9 @@ exports.crearEjemplo = async (req, res) => {
     });
 
   } catch (error) {
-    // 25006 es el código de PostgreSQL para "read_only_sql_transaction"
+    // 25006 es el codigo de PostgreSQL para "read_only_sql_transaction"
     if (error.code === '25006') {
-      console.warn('⚠️ Intento de escritura en Base de Datos de Solo Lectura (VM5 activa)');
+      console.warn('[BD] Intento de escritura en Base de Datos de Solo Lectura (VM5 activa)');
       return res.status(503).json({
         success: false,
         error: 'El sistema se encuentra temporalmente en modo de mantenimiento (solo lectura). No se pueden guardar cambios en este momento, pero puedes seguir navegando.',

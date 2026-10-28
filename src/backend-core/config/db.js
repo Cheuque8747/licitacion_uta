@@ -33,10 +33,10 @@ setInterval(async () => {
   if (usingReplica) {
     try {
       await primaryPool.query('SELECT 1');
-      console.log('✅ Base de datos principal (VM4) recuperada. Haciendo Failback automático...');
+      console.log('[BD] Base de datos principal recuperada. Ejecutando failback automatico...');
       usingReplica = false;
     } catch (e) {
-      // Sigue muerta, no hacemos nada
+      // Sigue no disponible, se reintenta en el siguiente ciclo
     }
   }
 }, 60000);
@@ -50,9 +50,9 @@ module.exports = {
       try {
         return await primaryPool.query(text, params);
       } catch (err) {
-        // Interceptar errores de conexión de PostgreSQL
+        // Interceptar errores de conexion de PostgreSQL
         if (err.code === 'ECONNREFUSED' || err.code === 'EHOSTUNREACH' || err.code === 'ETIMEDOUT' || err.message.includes('Connection terminated')) {
-          console.warn('⚠️ Base de datos principal (VM4) caída. Haciendo Failover automático a la Réplica (VM5)...');
+          console.warn('[BD] Base de datos principal no disponible. Ejecutando failover a replica...');
           usingReplica = true;
           return replicaPool.query(text, params);
         }

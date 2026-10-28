@@ -1,17 +1,25 @@
 const db = require('../config/db');
-const { calcularMatch } = require('../../ia-module/recomendador');
+const IA_SERVICE_URL = process.env.IA_SERVICE_URL || 'http://ia-service:5001';
 
 exports.analizarMatchIA = async (req, res) => {
     try {
         const { cv, oferta } = req.body;
         
-        // Llamar a la lógica de IA aislada
-        const jsonMatch = await calcularMatch(cv, oferta);
+        const response = await fetch(`${IA_SERVICE_URL}/analizar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cv, oferta })
+        });
 
-        res.json({ success: true, match_score: jsonMatch.score, feedback: jsonMatch.feedback });
+        if (!response.ok) {
+            throw new Error(`ia-service respondio con status ${response.status}`);
+        }
+
+        const jsonMatch = await response.json();
+        res.json(jsonMatch);
     } catch (error) {
-        console.error('Error en controlador (analizarMatchIA):', error);
-        res.status(500).json({ success: false, error: 'Error al generar análisis de IA' });
+        console.error('Error en controlador (analizarMatchIA) invocando ia-service:', error.message);
+        res.status(500).json({ success: false, error: 'Error al generar analisis de IA' });
     }
 };
 

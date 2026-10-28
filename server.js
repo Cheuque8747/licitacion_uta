@@ -4,7 +4,7 @@ const path = require('path');
 const db = require('./src/backend-core/config/db');
 
 const app = express();
-const port = 3000; // ⚠️ Puerto bloqueado en 3000 por el upstream de Nginx (VM1)
+const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
