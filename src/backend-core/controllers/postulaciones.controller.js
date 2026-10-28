@@ -11,7 +11,7 @@ exports.analizarMatchIA = async (req, res) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ cv, oferta }),
-                signal: AbortSignal.timeout(4000)
+                signal: AbortSignal.timeout(15000)
             });
         } catch (fetchErr) {
             console.warn('[Backend] Reintentando con replica de IA disponible tras advertencia:', fetchErr.message);
@@ -20,7 +20,7 @@ exports.analizarMatchIA = async (req, res) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ cv, oferta }),
-                signal: AbortSignal.timeout(8000)
+                signal: AbortSignal.timeout(25000)
             });
         }
 
