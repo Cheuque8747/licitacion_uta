@@ -11,6 +11,11 @@ services:
       - "frontend:${APP_HOST:-frontend}"
       - "backend-core:${APP_HOST:-backend-core}"
       - "ia-service:${APP_HOST:-ia-service}"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
     depends_on:
       frontend:
         condition: service_healthy
@@ -48,7 +53,7 @@ services:
     build:
       context: ./src/backend-core
       dockerfile: Dockerfile
-    container_name: licitacion_backend
+    # container_name omitido para permitir multiples replicas
     environment:
       - PORT=3000
       - DB_USER=${DB_USER}
@@ -70,7 +75,9 @@ services:
         condition: service_healthy
         required: false
     ports:
-      - "${BACKEND_PORT:-3000}:3000"
+      - "${BACKEND_PORT:-3000}-3001:3000"
+    deploy:
+      replicas: 2
     networks:
       - licitacion_net
     profiles:
@@ -83,12 +90,14 @@ services:
     build:
       context: ./src/ia-module
       dockerfile: Dockerfile
-    container_name: licitacion_ia
+    # container_name omitido para permitir multiples replicas
     environment:
       - PORT=5001
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     ports:
-      - "${IA_PORT:-5001}:5001"
+      - "${IA_PORT:-5001}-5002:5001"
+    deploy:
+      replicas: 2
     networks:
       - licitacion_net
     profiles:

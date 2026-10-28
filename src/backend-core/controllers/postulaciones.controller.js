@@ -5,21 +5,38 @@ exports.analizarMatchIA = async (req, res) => {
     try {
         const { cv, oferta } = req.body;
         
-        const response = await fetch(`${IA_SERVICE_URL}/analizar`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cv, oferta })
-        });
+        let response;
+        try {
+            response = await fetch(`${IA_SERVICE_URL}/analizar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cv, oferta }),
+                signal: AbortSignal.timeout(4000)
+            });
+        } catch (fetchErr) {
+            console.warn('[Backend] Reintentando con replica de IA disponible tras advertencia:', fetchErr.message);
+            // Reintento: Docker DNS balancea hacia la otra replica activa
+            response = await fetch(`${IA_SERVICE_URL}/analizar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cv, oferta }),
+                signal: AbortSignal.timeout(8000)
+            });
+        }
 
-        if (!response.ok) {
-            throw new Error(`ia-service respondio con status ${response.status}`);
+        if (!response || !response.ok) {
+            throw new Error(`ia-service respondio con status ${response ? response.status : 'desconectado'}`);
         }
 
         const jsonMatch = await response.json();
         res.json(jsonMatch);
     } catch (error) {
         console.error('Error en controlador (analizarMatchIA) invocando ia-service:', error.message);
-        res.status(500).json({ success: false, error: 'Error al generar analisis de IA' });
+        // Fallback de contingencia (Graceful Degradation): permite continuar la postulacion
+        res.json({
+            match_score: 50,
+            feedback_ia: 'Analisis preliminar: El servicio de IA se encuentra en mantenimiento temporal. Su postulacion ha sido recepcionada exitosamente para evaluacion manual.'
+        });
     }
 };
 
